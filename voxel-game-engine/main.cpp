@@ -3,8 +3,8 @@
 #include <sstream>
 #include <windows.h>
 
-#include"glad/glad.h"
-#include"GLFW/glfw3.h"
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
 
 #include "util.c"
 
@@ -124,30 +124,32 @@ void saveFile() {
 }
 
 // Nacteni mapy ze souboru
-void loadFile() {
-    OPENFILENAMEW ofn;
-    wchar_t path[260] = { }; // 260 - max. delka cesty souboru
+void loadFile(std::wstring filePath = L"") {
+    if (filePath.empty()) {
+        OPENFILENAMEW ofn;
+        wchar_t path[260] = { }; // 260 - max. delka cesty souboru
 
-    // nastaveni okna pro vyber souboru
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = NULL;
-    ofn.lpstrFile = path;
-    ofn.lpstrFile[0] = L'\0';
-    ofn.nMaxFile = sizeof(path);
-    ofn.lpstrFilter = L"All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrInitialDir = NULL;
-    ofn.lpstrFileTitle = NULL;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+        // nastaveni okna pro vyber souboru
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = NULL;
+        ofn.lpstrFile = path;
+        ofn.lpstrFile[0] = L'\0';
+        ofn.nMaxFile = sizeof(path);
+        ofn.lpstrFilter = L"All Files\0*.*\0";
+        ofn.nFilterIndex = 1;
+        ofn.lpstrInitialDir = NULL;
+        ofn.lpstrFileTitle = NULL;
+        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-    // okno pro vyber souboru
-    if (GetOpenFileNameW(&ofn) == FALSE) {
-        std::cout << "No file selected\n";
-        return;
+        // okno pro vyber souboru
+        if (GetOpenFileNameW(&ofn) == FALSE) {
+            std::cout << "No file selected\n";
+            return;
+        }
+
+        filePath = ofn.lpstrFile;
     }
-
-    std::wstring filePath = ofn.lpstrFile;
 
     std::ifstream file(filePath, std::ios::binary);
 
@@ -397,6 +399,8 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     // priprava na delta time
     float lastTime = (float)glfwGetTime();
+
+    loadFile(L"demo.bin");
 
     /* Main game loop */
     while (!glfwWindowShouldClose(window))
