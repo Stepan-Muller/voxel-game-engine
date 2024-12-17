@@ -3,29 +3,16 @@
 #include <sstream>
 #include <windows.h>
 
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 #include "util.c"
+#include "file_io.h"
+#include "player.h"
+#include "map.h"
 
-/* Konstanty hráče */
-#define TURN_SPEED 0.002f
-/* Proměnné hráče */
-float playerPos[3], playerDelta[3], lastMouse[2], playerAngle, cameraAngle, deltaTime;
-int moveSpeed;
-bool menu = false, resetMouse = true;
-
-/* Konstanty kamery */
-#define V_SYNC true
-/* Proměnné kamery */
-float fov = 60 * PI / 180.0f;
-int screenWidth = 1280, screenHeight = 720, renderDistance = 300;
-float sunDir[3], skyColor[3];
-GLuint voxelGridColorTex;
-
-/* Proměnné mapy */
-unsigned int gridWidth, gridHeight, gridDepth;
-float * voxelGridColor;
+Map map;
+Player player;
 
 /* Verze OpenGL (4.6) */
 #define OPENGL_MAJOR_VERSION 4
@@ -65,199 +52,69 @@ const GLchar* screenFragmentShaderSource = screenFragmentSource.c_str();
 std::string screenComputeSource = loadShaderSource("compute.glsl");
 const GLchar* screenComputeShaderSource = screenComputeSource.c_str();
 
-// Ulozeni mapy do souboru
-void saveFile() {
-    OPENFILENAMEW ofn;
-    wchar_t path[260] = { }; // 260 - max. delka cesty souboru
-
-    // nastaveni okna pro vyber souboru
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = NULL;
-    ofn.lpstrFile = path;
-    ofn.lpstrFile[0] = L'\0';
-    ofn.nMaxFile = sizeof(path);
-    ofn.lpstrFilter = L"All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-
-    // okno pro vyber souboru
-    if (GetSaveFileNameW(&ofn) == FALSE) {
-        std::cout << "No file selected\n";
-        return;
-    }
-
-    std::wstring filePath = ofn.lpstrFile;
-
-    std::ofstream file(filePath, std::ios::binary);
-
-    if (!file.is_open()) {
-        std::cout << "Failed to open file for writing\n";
-        return;
-    }
-
-    // velikost mapy
-    file.write(reinterpret_cast<char*>(&gridWidth), sizeof(gridWidth));
-    file.write(reinterpret_cast<char*>(&gridHeight), sizeof(gridHeight));
-    file.write(reinterpret_cast<char*>(&gridDepth), sizeof(gridDepth));
-
-    // uhel kamery a hrace
-    file.write(reinterpret_cast<char*>(&playerAngle), sizeof(playerAngle));
-    file.write(reinterpret_cast<char*>(&cameraAngle), sizeof(cameraAngle));
-
-    // rychlost pohybu ve scene
-    file.write(reinterpret_cast<char*>(&moveSpeed), sizeof(moveSpeed));
-
-    // pozice hrace
-    file.write(reinterpret_cast<char*>(&playerPos), 3 * sizeof(float));
-
-    // smer slunce a barva nebe
-    file.write(reinterpret_cast<char*>(&sunDir), 3 * sizeof(float));
-    file.write(reinterpret_cast<char*>(&skyColor), 3 * sizeof(float));
-
-    // mapa
-    file.write(reinterpret_cast<char*>(voxelGridColor), (std::streamsize)gridWidth * gridHeight * gridDepth * 4 * sizeof(float));
-
-    file.close();
-}
-
-// Nacteni mapy ze souboru
-void loadFile(std::wstring filePath = L"") {
-    if (filePath.empty()) {
-        OPENFILENAMEW ofn;
-        wchar_t path[260] = { }; // 260 - max. delka cesty souboru
-
-        // nastaveni okna pro vyber souboru
-        ZeroMemory(&ofn, sizeof(ofn));
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = NULL;
-        ofn.lpstrFile = path;
-        ofn.lpstrFile[0] = L'\0';
-        ofn.nMaxFile = sizeof(path);
-        ofn.lpstrFilter = L"All Files\0*.*\0";
-        ofn.nFilterIndex = 1;
-        ofn.lpstrInitialDir = NULL;
-        ofn.lpstrFileTitle = NULL;
-        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-        // okno pro vyber souboru
-        if (GetOpenFileNameW(&ofn) == FALSE) {
-            std::cout << "No file selected\n";
-            return;
-        }
-
-        filePath = ofn.lpstrFile;
-    }
-
-    std::ifstream file(filePath, std::ios::binary);
-
-    if (!file.is_open()) {
-        std::cout << "Failed to open file for reading\n";
-        return;
-    }
-
-    // velikost mapy
-    file.read(reinterpret_cast<char*>(&gridWidth), sizeof(gridWidth));
-    file.read(reinterpret_cast<char*>(&gridHeight), sizeof(gridHeight));
-    file.read(reinterpret_cast<char*>(&gridDepth), sizeof(gridDepth));
-
-    // uhel kamery a hrace
-    file.read(reinterpret_cast<char*>(&playerAngle), sizeof(playerAngle));
-    file.read(reinterpret_cast<char*>(&cameraAngle), sizeof(cameraAngle));
-
-    // rychlost pohybu ve scene
-    file.read(reinterpret_cast<char*>(&moveSpeed), sizeof(moveSpeed));
-
-    // pozice hrace
-    file.read(reinterpret_cast<char*>(&playerPos), 3 * sizeof(float));
-
-    // smer slunce a barva nebe
-    file.read(reinterpret_cast<char*>(&sunDir), 3 * sizeof(float));
-    file.read(reinterpret_cast<char*>(&skyColor), 3 * sizeof(float));
-
-    // mapa
-    voxelGridColor = new float[gridWidth * gridHeight * gridDepth * 4];
-    file.read(reinterpret_cast<char*>(voxelGridColor), (std::streamsize)gridWidth * gridHeight * gridDepth * 4 * sizeof(float));
-
-    file.close();
-
-    // vytvoreni textur ktere obsahuji mapu
-    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_3D, voxelGridColorTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, gridWidth, gridHeight, gridDepth, 0, GL_RGBA, GL_FLOAT, voxelGridColor);
-    glBindImageTexture(1, voxelGridColorTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-}
-
 /* Kdyz je zmacknuta klavesa */
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     // Uvolneni mysi
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
-        menu = !menu;
-        if (menu)
+        player.menu = !player.menu;
+        if (player.menu)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         else
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        resetMouse = true;
+        player.resetMouse = true;
     }
 
     // Ulozeni mapy
     if (key == GLFW_KEY_S && action == GLFW_PRESS &&
         glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        saveFile();
+        saveFile(&map, &player, &player.camera);
 
     // Nacteni mapy
     if (key == GLFW_KEY_O && action == GLFW_PRESS &&
         glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        loadFile();
+        loadFile(&map, &player, &player.camera);
 }
 
 /* Pohyb hrace pomoci mysi */
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
     // pokud je v menu, nehybat s kamerou
-    if (menu)
+    if (player.menu)
         return;
 
-    if (resetMouse)
+    if (player.resetMouse)
     {
-        lastMouse[0] = (float)xpos;
-        lastMouse[1] = (float)ypos;
-        resetMouse = false;
+        player.lastMouse[0] = (float)xpos;
+        player.lastMouse[1] = (float)ypos;
+        player.resetMouse = false;
     }
 
     // Osa x - otaceni hrace
-    playerAngle = capRad(playerAngle + ((float)xpos - lastMouse[0]) * TURN_SPEED);
-    lastMouse[0] = (float)xpos;
+    player.angle[0] = capRad(player.angle[0] + ((float)xpos - player.lastMouse[0]) * player.turnSpeed);
+    player.lastMouse[0] = (float)xpos;
 
-    playerDelta[0] = sin(playerAngle);
-    playerDelta[2] = cos(playerAngle);
+    player.delta[0] = sin(player.angle[0]);
+    player.delta[2] = cos(player.angle[0]);
 
     // Osa y - otaceni kamery
-    cameraAngle += ((float)ypos - lastMouse[1]) * TURN_SPEED;
-    lastMouse[1] = (float)ypos;
+    player.angle[1] += ((float)ypos - player.lastMouse[1]) * player.turnSpeed;
+    player.lastMouse[1] = (float)ypos;
 
-    if (cameraAngle > PI / 2)
-        cameraAngle = PI / 2;
-    else if (cameraAngle < -PI / 2)
-        cameraAngle = -PI / 2;
+    if (player.angle[1] > PI / 2)
+        player.angle[1] = PI / 2;
+    else if (player.angle[1] < -PI / 2)
+        player.angle[1] = -PI / 2;
 }
 
 /* Zmena velikosti okna */
 void window_size_callback(GLFWwindow* window, int width, int height)
 {
-    screenWidth = width;
-    screenHeight = height;
+    player.camera.width = width;
+    player.camera.height = height;
     
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, player.camera.width, player.camera.height);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 }
 
@@ -265,7 +122,7 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 void movePlayer(GLFWwindow* window)
 {
     // pokud je v menu, nehybat s hracem
-    if (menu)
+    if (player.menu)
         return;
 
     int speedMultiplier = 1;
@@ -274,33 +131,33 @@ void movePlayer(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_W))
     {
-        playerPos[0] -= playerDelta[0] * deltaTime * moveSpeed * speedMultiplier;
-        playerPos[2] -= playerDelta[2] * deltaTime * moveSpeed * speedMultiplier;
+        player.pos[0] -= player.delta[0] * player.deltaTime * player.moveSpeed * speedMultiplier;
+        player.pos[2] -= player.delta[2] * player.deltaTime * player.moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_S))
     {
-        playerPos[0] += playerDelta[0] * deltaTime * moveSpeed * speedMultiplier;
-        playerPos[2] += playerDelta[2] * deltaTime * moveSpeed * speedMultiplier;
+        player.pos[0] += player.delta[0] * player.deltaTime * player.moveSpeed * speedMultiplier;
+        player.pos[2] += player.delta[2] * player.deltaTime * player.moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_A))
     {
-        playerPos[0] += playerDelta[2] * deltaTime * moveSpeed * speedMultiplier;
-        playerPos[2] -= playerDelta[0] * deltaTime * moveSpeed * speedMultiplier;
+        player.pos[0] += player.delta[2] * player.deltaTime * player.moveSpeed * speedMultiplier;
+        player.pos[2] -= player.delta[0] * player.deltaTime * player.moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_D))
     {
-        playerPos[0] -= playerDelta[2] * deltaTime * moveSpeed * speedMultiplier;
-        playerPos[2] += playerDelta[0] * deltaTime * moveSpeed * speedMultiplier;
+        player.pos[0] -= player.delta[2] * player.deltaTime * player.moveSpeed * speedMultiplier;
+        player.pos[2] += player.delta[0] * player.deltaTime * player.moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_SPACE))
-        playerPos[1] -= deltaTime * moveSpeed * speedMultiplier;
+        player.pos[1] -= player.deltaTime * player.moveSpeed * speedMultiplier;
 
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
-        playerPos[1] += deltaTime * moveSpeed * speedMultiplier;
+        player.pos[1] += player.deltaTime * player.moveSpeed * speedMultiplier;
 }
 
 //int main(int argc, char* argv[]) {                                                                                        // pro konzolovou aplikaci
@@ -313,14 +170,14 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // tvorba okna
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Voxel Game Engine", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(player.camera.width, player.camera.height, "Voxel Game Engine", NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create the GLFW window\n";
         glfwTerminate();
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(V_SYNC);
+    glfwSwapInterval(player.camera.vSync);
 
     // nastaveni inputů + změny velikosti okna
     glfwSetKeyCallback(window, key_callback);
@@ -332,7 +189,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     {
         std::cout << "Failed to initialize OpenGL context" << std::endl;
     }
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, player.camera.width, player.camera.height);
 
     /*
     VAO - Vertex Array Object
@@ -367,7 +224,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     glTextureParameteri(screenTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTextureParameteri(screenTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, screenTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, player.camera.width, player.camera.height, 0, GL_RGBA, GL_FLOAT, nullptr);
     glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
     // screen shadery
@@ -400,13 +257,13 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     // priprava na delta time
     float lastTime = (float)glfwGetTime();
 
-    loadFile(L"demo.bin");
+    loadFile(&map, &player, &player.camera, L"demo.bin");
 
     /* Main game loop */
     while (!glfwWindowShouldClose(window))
     {
         // vypocet delta time
-        deltaTime = (float)glfwGetTime() - lastTime;
+        player.deltaTime = (float)glfwGetTime() - lastTime;
         lastTime = (float)glfwGetTime();
 
         // pohyb hrace
@@ -418,16 +275,15 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         // spusteni compute shaderu
         glUseProgram(computeProgram);
         // parametry compute shaderu
-        glUniform1i(glGetUniformLocation(computeProgram, "renderDist"), renderDistance);
-        glUniform1f(glGetUniformLocation(computeProgram, "playerAngle"), playerAngle);
-        glUniform1f(glGetUniformLocation(computeProgram, "cameraAngle"), cameraAngle);
-        glUniform1f(glGetUniformLocation(computeProgram, "fov"), fov);
-        glUniform3f(glGetUniformLocation(computeProgram, "playerPos"), playerPos[0], playerPos[1], playerPos[2]);
-        glUniform3f(glGetUniformLocation(computeProgram, "sunDir"), sunDir[0], sunDir[1], sunDir[2]);
-        glUniform3f(glGetUniformLocation(computeProgram, "skyColor"), skyColor[0], skyColor[1], skyColor[2]);
+        glUniform1i(glGetUniformLocation(computeProgram, "renderDist"), player.camera.renderDistance);
+        glUniform2f(glGetUniformLocation(computeProgram, "angle"), player.angle[0], player.angle[1]);
+        glUniform1f(glGetUniformLocation(computeProgram, "fov"), player.camera.fov);
+        glUniform3f(glGetUniformLocation(computeProgram, "playerPos"), player.pos[0], player.pos[1], player.pos[2]);
+        glUniform3f(glGetUniformLocation(computeProgram, "sunDir"), player.camera.sunDir[0], player.camera.sunDir[1], player.camera.sunDir[2]);
+        glUniform3f(glGetUniformLocation(computeProgram, "skyColor"), player.camera.skyColor[0], player.camera.skyColor[1], player.camera.skyColor[2]);
 
         // velikost
-        glDispatchCompute(screenWidth / 8 + 1, screenHeight / 4 + 1, 1);
+        glDispatchCompute(player.camera.width / 8 + 1, player.camera.height / 4 + 1, 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         // screen shader

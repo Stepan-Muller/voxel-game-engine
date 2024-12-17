@@ -5,8 +5,7 @@ layout(rgba32f, binding = 1) uniform image3D voxelGrid;
 
 uniform int renderDist;
 
-uniform float playerAngle;
-uniform float cameraAngle;
+uniform vec2 angle;
 uniform float fov;
 
 uniform vec3 playerPos;
@@ -96,8 +95,8 @@ Hit raytrace(Ray ray)
 
 void main()
 {	    	
-	vec3 cameraDir = vec3(cos(cameraAngle) * -sin(playerAngle), sin(cameraAngle), cos(cameraAngle) * -cos(playerAngle));
-	vec3 cameraUp = vec3(sin(cameraAngle) * sin(playerAngle), cos(cameraAngle), sin(cameraAngle) * cos(playerAngle));
+	vec3 cameraDir = vec3(cos(angle[1]) * -sin(angle[0]), sin(angle[1]), cos(angle[1]) * -cos(angle[0]));
+	vec3 cameraUp = vec3(sin(angle[1]) * sin(angle[0]), cos(angle[1]), sin(angle[1]) * cos(angle[0]));
 
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 	ivec2 dims = imageSize(screen);
