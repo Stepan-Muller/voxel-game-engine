@@ -1,6 +1,11 @@
 #pragma once
 
 struct Map {
-	unsigned int width, height, depth;
-	float* voxelGridColor;
+	unsigned int width, 
+				 height, 
+				 depth,
+				 moveSpeed;	
+	float sunDir[3],
+		  skyColor[3],
+		  *voxelGridColor;
 };
