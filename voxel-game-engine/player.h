@@ -10,6 +10,7 @@
 
 #include "util.c"
 #include "map.h"
+#include "file_io.h"
 
 /* Verze OpenGL (4.6) */
 #define OPENGL_MAJOR_VERSION 4
@@ -33,15 +34,14 @@ private:
     bool menu = false,
          resetMouse = true,
          vSync = true;
-    GLuint voxelGridColorTex;
+
     std::string loadShaderSource(const std::string& filePath);
-    void saveFile();
-    void loadFile(std::wstring filePath = L"");
-    void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-    void mouseCallback(GLFWwindow* window, double xpos, double ypos);
-    void windowSizeCallback(GLFWwindow* window, int width, int height);
-    void movePlayer(GLFWwindow* window);
-    static void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-    static void staticMouseCallback(GLFWwindow* window, double xpos, double ypos);
-    static void staticWindowSizeCallback(GLFWwindow* window, int width, int height);
+    void respawn(),
+         keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
+         mouseCallback(GLFWwindow* window, double xpos, double ypos),
+         windowSizeCallback(GLFWwindow* window, int width, int height),
+         movePlayer(GLFWwindow* window);
+    static void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
+                staticMouseCallback(GLFWwindow* window, double xpos, double ypos),
+                staticWindowSizeCallback(GLFWwindow* window, int width, int height);
 };

@@ -7,15 +7,16 @@ Player::Player(Map* _map) {
 
     std::string screenVertexSource = loadShaderSource("vertex.glsl");
     const GLchar* screenVertexShaderSource = screenVertexSource.c_str();
-
+    
     std::string screenFragmentSource = loadShaderSource("fragment.glsl");
     const GLchar* screenFragmentShaderSource = screenFragmentSource.c_str();
-
+    
     std::string screenComputeSource = loadShaderSource("compute.glsl");
     const GLchar* screenComputeShaderSource = screenComputeSource.c_str();
 
     GLuint screenTex;
-
+    
+    // Geometrie obrazovky
     GLfloat vertices[20] =
     {
         -1.0f, -1.0f , 0.0f, 0.0f, 0.0f,
@@ -23,7 +24,6 @@ Player::Player(Map* _map) {
          1.0f,  1.0f , 0.0f, 1.0f, 1.0f,
          1.0f, -1.0f , 0.0f, 1.0f, 0.0f,
     };
-
     GLuint indices[6] =
     {
         0, 2, 1,
@@ -126,7 +126,7 @@ Player::Player(Map* _map) {
     // priprava na delta time
     float lastTime = (float)glfwGetTime();
 
-    loadFile(L"demo.bin");
+    loadFile(map, L"demo.bin");
 
     /* Main game loop */
     while (!glfwWindowShouldClose(window))
@@ -170,7 +170,6 @@ Player::Player(Map* _map) {
     glfwTerminate();
 }
 
-/* OpenGL shadery */
 std::string Player::loadShaderSource(const std::string& filePath) {
     std::ifstream file(filePath);
     std::stringstream buffer;
@@ -178,132 +177,15 @@ std::string Player::loadShaderSource(const std::string& filePath) {
     return buffer.str();
 }
 
-// Ulozeni mapy do souboru
-void Player::saveFile() {
-    OPENFILENAMEW ofn;
-    wchar_t path[260] = { }; // 260 - max. delka cesty souboru
-
-    // nastaveni okna pro vyber souboru
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = NULL;
-    ofn.lpstrFile = path;
-    ofn.lpstrFile[0] = L'\0';
-    ofn.nMaxFile = sizeof(path);
-    ofn.lpstrFilter = L"All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-
-    // okno pro vyber souboru
-    if (GetSaveFileNameW(&ofn) == FALSE) {
-        std::cout << "No file selected\n";
-        return;
-    }
-
-    std::wstring filePath = ofn.lpstrFile;
-
-    std::ofstream file(filePath, std::ios::binary);
-
-    if (!file.is_open()) {
-        std::cout << "Failed to open file for writing\n";
-        return;
-    }
-
-    // velikost mapy
-    file.write(reinterpret_cast<char*>(&map->width), sizeof(map->width));
-    file.write(reinterpret_cast<char*>(&map->height), sizeof(map->height));
-    file.write(reinterpret_cast<char*>(&map->depth), sizeof(map->depth));
-
-    // uhel kamery a hrace
-    file.write(reinterpret_cast<char*>(&angle), 2 * sizeof(float));
-
-    // rychlost pohybu ve scene
-    file.write(reinterpret_cast<char*>(&map->moveSpeed), sizeof(map->moveSpeed));
-
-    // pozice hrace
-    file.write(reinterpret_cast<char*>(&pos), 3 * sizeof(float));
-
-    // smer slunce a barva nebe
-    file.write(reinterpret_cast<char*>(&map->sunDir), 3 * sizeof(float));
-    file.write(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
-
-    // mapa
-    file.write(reinterpret_cast<char*>(map->voxelGridColor), (std::streamsize)map->width * map->height * map->depth * 4 * sizeof(float));
-
-    file.close();
-}
-
-// Nacteni mapy ze souboru
-void Player::loadFile(std::wstring filePath) {
-    if (filePath.empty()) {
-        OPENFILENAMEW ofn;
-        wchar_t path[260] = { }; // 260 - max. delka cesty souboru
-
-        // nastaveni okna pro vyber souboru
-        ZeroMemory(&ofn, sizeof(ofn));
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = NULL;
-        ofn.lpstrFile = path;
-        ofn.lpstrFile[0] = L'\0';
-        ofn.nMaxFile = sizeof(path);
-        ofn.lpstrFilter = L"All Files\0*.*\0";
-        ofn.nFilterIndex = 1;
-        ofn.lpstrInitialDir = NULL;
-        ofn.lpstrFileTitle = NULL;
-        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-        // okno pro vyber souboru
-        if (GetOpenFileNameW(&ofn) == FALSE) {
-            std::cout << "No file selected\n";
-            return;
-        }
-
-        filePath = ofn.lpstrFile;
-    }
-
-    std::ifstream file(filePath, std::ios::binary);
-
-    if (!file.is_open()) {
-        std::cout << "Failed to open file for reading\n";
-        return;
-    }
-
-    // velikost mapy
-    file.read(reinterpret_cast<char*>(&map->width), sizeof(map->width));
-    file.read(reinterpret_cast<char*>(&map->height), sizeof(map->height));
-    file.read(reinterpret_cast<char*>(&map->depth), sizeof(map->depth));
-
-    // uhel kamery a hrace
-    file.read(reinterpret_cast<char*>(&angle), 2 * sizeof(float));
-
-    // rychlost pohybu ve scene
-    file.read(reinterpret_cast<char*>(&map->moveSpeed), sizeof(map->moveSpeed));
-
-    // pozice hrace
-    file.read(reinterpret_cast<char*>(&pos), 3 * sizeof(float));
-
-    // smer slunce a barva nebe
-    file.read(reinterpret_cast<char*>(&map->sunDir), 3 * sizeof(float));
-    file.read(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
-
-    // mapa
-    map->voxelGridColor = new float[map->width * map->height * map->depth * 4];
-    file.read(reinterpret_cast<char*>(map->voxelGridColor), (std::streamsize)map->width * map->height * map->depth * 4 * sizeof(float));
-
-    file.close();
-
-    // vytvoreni textur ktere obsahuji mapu
-    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_3D, voxelGridColorTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, map->width, map->height, map->depth, 0, GL_RGBA, GL_FLOAT, map->voxelGridColor);
-    glBindImageTexture(1, voxelGridColorTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+void Player::respawn() {
+	pos[0] = map->spawnPos[0];
+	pos[1] = map->spawnPos[1];
+	pos[2] = map->spawnPos[2];
+	angle[0] = map->spawnAngle[0];
+	angle[1] = map->spawnAngle[1];
+	delta[0] = sin(angle[0]);
+	delta[2] = cos(angle[0]);
+    menu = false;
 }
 
 /* Kdyz je zmacknuta klavesa */
@@ -321,22 +203,28 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
     }
 
     // Ulozeni mapy
-    if (key == GLFW_KEY_S && action == GLFW_PRESS &&
-        glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        saveFile();
+    if (menu && key == GLFW_KEY_S && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+    {
+        saveFile(map);
+        respawn();
+    }
 
     // Nacteni mapy
-    if (key == GLFW_KEY_O && action == GLFW_PRESS &&
-        glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        loadFile();
+    if (menu && key == GLFW_KEY_O && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+    {
+        loadFile(map);
+        respawn();
+    }
+
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+        respawn();
 }
 
 /* Pohyb hrace pomoci mysi */
 void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
     // pokud je v menu, nehybat s kamerou
-    if (menu)
-        return;
+    if (menu) return;
 
     if (resetMouse)
     {
@@ -346,20 +234,15 @@ void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
     }
 
     // Osa x - otaceni hrace
-    angle[0] = capRad(angle[0] + ((float)xpos - lastMouse[0]) * turnSpeed);
+    angle[0] = capRad360(angle[0] + ((float)xpos - lastMouse[0]) * turnSpeed);
     lastMouse[0] = (float)xpos;
 
     delta[0] = sin(angle[0]);
     delta[2] = cos(angle[0]);
 
     // Osa y - otaceni kamery
-    angle[1] += ((float)ypos - lastMouse[1]) * turnSpeed;
+    angle[1] += capRad90_90(((float)ypos - lastMouse[1]) * turnSpeed);
     lastMouse[1] = (float)ypos;
-
-    if (angle[1] > PI / 2)
-        angle[1] = PI / 2;
-    else if (angle[1] < -PI / 2)
-        angle[1] = -PI / 2;
 }
 
 /* Zmena velikosti okna */
@@ -376,12 +259,9 @@ void Player::windowSizeCallback(GLFWwindow* window, int width, int height)
 void Player::movePlayer(GLFWwindow* window)
 {
     // pokud je v menu, nehybat s hracem
-    if (menu)
-        return;
+    if (menu) return;
 
-    int speedMultiplier = 1;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL))
-        speedMultiplier = 2;
+    int speedMultiplier = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ? 1 : 2;
 
     if (glfwGetKey(window, GLFW_KEY_W))
     {
