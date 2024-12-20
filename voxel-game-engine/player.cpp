@@ -127,6 +127,7 @@ Player::Player(Map* _map) {
     float lastTime = (float)glfwGetTime();
 
     loadFile(map, L"demo.bin");
+    respawn();
 
     /* Main game loop */
     while (!glfwWindowShouldClose(window))
@@ -185,7 +186,6 @@ void Player::respawn() {
 	angle[1] = map->spawnAngle[1];
 	delta[0] = sin(angle[0]);
 	delta[2] = cos(angle[0]);
-    menu = false;
 }
 
 /* Kdyz je zmacknuta klavesa */
@@ -204,10 +204,7 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
     // Ulozeni mapy
     if (menu && key == GLFW_KEY_S && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-    {
         saveFile(map);
-        respawn();
-    }
 
     // Nacteni mapy
     if (menu && key == GLFW_KEY_O && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
