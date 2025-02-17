@@ -56,6 +56,7 @@ void saveFile(Map* map) {
     // mapa
     file.write(reinterpret_cast<char*>(map->voxelGridColor), (std::streamsize)map->width * map->height * map->depth * 4 * sizeof(float));
     file.write(reinterpret_cast<char*>(map->voxelGridProperties), (std::streamsize)map->width * map->height * map->depth * sizeof(float));
+	file.write(reinterpret_cast<char*>(map->voxelGridCollision), (std::streamsize)map->width * map->height * map->depth * sizeof(bool));
 
     file.close();
 }
@@ -119,6 +120,9 @@ void loadFile(Map* map, std::wstring filePath) {
 
     map->voxelGridProperties = new float[map->width * map->height * map->depth];
     file.read(reinterpret_cast<char*>(map->voxelGridProperties), (std::streamsize)map->width * map->height * map->depth * sizeof(float));
+
+    map->voxelGridCollision = new bool[map->width * map->height * map->depth];
+	file.read(reinterpret_cast<char*>(map->voxelGridCollision), (std::streamsize)map->width * map->height * map->depth * sizeof(bool));
 
     file.close();
 

@@ -9,6 +9,7 @@ struct Map {
 		  skyColor[3],
 		  spawnPos[3],
 		  spawnAngle[2],
-		  *voxelGridColor,
-		  *voxelGridProperties;
+		  *voxelGridColor, // èervená, zelená, modrá, prùhlednost
+		  *voxelGridProperties; // odrazivost
+	bool *voxelGridCollision; // kolize
 };

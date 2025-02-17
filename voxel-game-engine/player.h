@@ -16,6 +16,9 @@
 #define OPENGL_MAJOR_VERSION 4
 #define OPENGL_MINOR_VERSION 6
 
+/* Fyzika */
+#define GRAVITY 98.0f
+
 class Player {
 public:
     Player(Map* _map);
@@ -24,7 +27,8 @@ private:
     float pos[3], 
           delta[3], 
           angle[2],
-          lastMouse[2], 
+          lastMouse[2],
+          fallSpeed = 0,
           deltaTime, 
           turnSpeed = 0.002f, 
           fov = 60 * PI / 180.0f;
@@ -33,7 +37,8 @@ private:
         renderDistance = 300;
     bool menu = false,
          resetMouse = true,
-         vSync = true;
+         vSync = true,
+	     grounded = false;
 
     std::string loadShaderSource(const std::string& filePath);
     void respawn(),
@@ -41,6 +46,8 @@ private:
          mouseCallback(GLFWwindow* window, double xpos, double ypos),
          windowSizeCallback(GLFWwindow* window, int width, int height),
          movePlayer(GLFWwindow* window);
+	bool checkCollision(int pos[3]),
+         checkPlayerCollision(float pos[3]);
     static void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
                 staticMouseCallback(GLFWwindow* window, double xpos, double ypos),
                 staticWindowSizeCallback(GLFWwindow* window, int width, int height);

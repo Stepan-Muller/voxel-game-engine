@@ -252,6 +252,48 @@ void Player::windowSizeCallback(GLFWwindow* window, int width, int height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 }
 
+bool Player::checkCollision(int pos[3]) 
+{
+    // zamezit hraci spadnout pod mapu
+    if (pos[1] >= (int)map->height)
+        return true;
+    
+    if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)map->width || pos[2] >= (int)map->depth)
+		return false;
+    
+    return map->voxelGridCollision[pos[0] + pos[1] * map->width + pos[2] * map->width * map->height];
+}
+
+// zjisti, zda je na dane pozici kolize
+bool Player::checkPlayerCollision(float pos[3]) 
+{
+    int min[3];
+	int max[3];
+    
+    min[0] = (int)(pos[0] - 2.5f);
+    max[0] = (int)(pos[0] + 2.5f);
+    min[1] = (int)pos[1];
+    max[1] = (int)(pos[1] + 10.0f);
+    min[2] = (int)(pos[2] - 2.5f);
+    max[2] = (int)(pos[2] + 2.5f);
+
+    for (int x = min[0]; x <= max[0]; x++)
+    {
+        for (int y = min[1]; y <= max[1]; y++)
+        {
+            for (int z = min[2]; z <= max[2]; z++)
+            {
+                int voxelPos[3] = {x, y, z};
+                
+                if (checkCollision(voxelPos))
+                    return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 /* Pohyb hrace pomoci klaves WSAD */
 void Player::movePlayer(GLFWwindow* window)
 {
@@ -260,35 +302,57 @@ void Player::movePlayer(GLFWwindow* window)
 
     int speedMultiplier = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ? 1 : 2;
 
+    float move[3] = {0, 0, 0};
+
     if (glfwGetKey(window, GLFW_KEY_W))
     {
-        pos[0] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
-        pos[2] -= delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] -= delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_S))
     {
-        pos[0] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
-        pos[2] += delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] += delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_A))
     {
-        pos[0] += delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
-        pos[2] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] += delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_D))
     {
-        pos[0] -= delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
-        pos[2] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] -= delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
-    if (glfwGetKey(window, GLFW_KEY_SPACE))
-        pos[1] -= deltaTime * map->moveSpeed * speedMultiplier;
+    if (grounded)
+    {
+		fallSpeed = 0;
+        if (glfwGetKey(window, GLFW_KEY_SPACE))
+			fallSpeed = -50;
+	}
+	else
+	{
+		fallSpeed += GRAVITY * deltaTime;
+		move[1] += fallSpeed * deltaTime;
+	}
 
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
-        pos[1] += deltaTime * map->moveSpeed * speedMultiplier;
+    // kontrola kolizí
+	float checkPosX[3] = { pos[0] + move[0], pos[1], pos[2] };
+    if (!checkPlayerCollision(checkPosX))
+        pos[0] += move[0];
+
+    float checkPosY[3] = { pos[0], pos[1] + move[1], pos[2] };
+    grounded = checkPlayerCollision(checkPosY);
+    if (!grounded)
+        pos[1] += move[1];
+
+    float checkPosZ[3] = { pos[0], pos[1], pos[2] + move[2] };
+    if (!checkPlayerCollision(checkPosZ))
+        pos[2] += move[2];
 }
 
 void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
