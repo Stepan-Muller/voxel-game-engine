@@ -123,6 +123,15 @@ Player::Player(Map* _map) {
 
     glDeleteShader(computeShader);
 
+    // inicializace ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();  // daarmode
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 460");  // Match your shader version
+
     // priprava na delta time
     float lastTime = (float)glfwGetTime();
 
@@ -164,11 +173,19 @@ Player::Player(Map* _map) {
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
+		renderImGui();
+
         glfwSwapBuffers(window);
     }
 
+    // cleanup glfw
     glfwDestroyWindow(window);
     glfwTerminate();
+
+	// cleanup ImGui
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
 std::string Player::loadShaderSource(const std::string& filePath) {
@@ -353,6 +370,19 @@ void Player::movePlayer(GLFWwindow* window)
     float checkPosZ[3] = { pos[0], pos[1], pos[2] + move[2] };
     if (!checkPlayerCollision(checkPosZ))
         pos[2] += move[2];
+}
+
+void Player::renderImGui() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::Begin("Voxel Engine UI");
+    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

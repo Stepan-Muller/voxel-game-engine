@@ -7,6 +7,9 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 
 #include "util.c"
 #include "map.h"
@@ -45,7 +48,8 @@ private:
          keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
          mouseCallback(GLFWwindow* window, double xpos, double ypos),
          windowSizeCallback(GLFWwindow* window, int width, int height),
-         movePlayer(GLFWwindow* window);
+         movePlayer(GLFWwindow* window),
+		 renderImGui();
 	bool checkCollision(int pos[3]),
          checkPlayerCollision(float pos[3]);
     static void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
