@@ -42,17 +42,21 @@ private:
          resetMouse = true,
          vSync = true,
 	     grounded = false;
+    GLuint hitBuffer;
 
     std::string loadShaderSource(const std::string& filePath);
     void respawn(),
          keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
          mouseCallback(GLFWwindow* window, double xpos, double ypos),
+         mouseButtonCallback(GLFWwindow* window, int button, int action, int mods),
          windowSizeCallback(GLFWwindow* window, int width, int height),
          movePlayer(GLFWwindow* window),
-		 renderImGui();
+		 renderImGui(),
+         changeVoxel(int pos[3], float voxel[5], bool collision);
 	bool checkCollision(int pos[3]),
          checkPlayerCollision(float pos[3]);
     static void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
                 staticMouseCallback(GLFWwindow* window, double xpos, double ypos),
+                staticMouseButtonCallback(GLFWwindow* window, int button, int action, int mods),
                 staticWindowSizeCallback(GLFWwindow* window, int width, int height);
 };

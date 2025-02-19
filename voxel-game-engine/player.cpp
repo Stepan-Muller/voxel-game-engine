@@ -51,6 +51,7 @@ Player::Player(Map* _map) {
     // nastaveni inputù + zmìny velikosti okna
     glfwSetKeyCallback(window, staticKeyCallback);
     glfwSetCursorPosCallback(window, staticMouseCallback);
+	glfwSetMouseButtonCallback(window, staticMouseButtonCallback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetWindowSizeCallback(window, staticWindowSizeCallback);
 
@@ -95,6 +96,13 @@ Player::Player(Map* _map) {
     glBindTexture(GL_TEXTURE_2D, screenTex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
     glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+	// buffer pro voxel ve stredu obrazovky
+    glGenBuffers(1, &hitBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * sizeof(int), NULL, GL_DYNAMIC_READ);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, hitBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     // screen shadery
     GLuint screenVertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -161,7 +169,6 @@ Player::Player(Map* _map) {
         glUniform3f(glGetUniformLocation(computeProgram, "sunDir"), map->sunDir[0], map->sunDir[1], map->sunDir[2]);
         glUniform3f(glGetUniformLocation(computeProgram, "skyColor"), map->skyColor[0], map->skyColor[1], map->skyColor[2]);
 
-        // velikost
         glDispatchCompute(screenWidth / 8 + 1, screenHeight / 4 + 1, 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
@@ -173,6 +180,7 @@ Player::Player(Map* _map) {
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
+        // UI
 		renderImGui();
 
         glfwSwapBuffers(window);
@@ -203,6 +211,42 @@ void Player::respawn() {
 	angle[1] = map->spawnAngle[1];
 	delta[0] = sin(angle[0]);
 	delta[2] = cos(angle[0]);
+}
+
+// R, G, B, A, odrazivost; kolize
+void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
+{
+	if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)map->width || pos[1] >= (int)map->height || pos[2] >= (int)map->depth)
+		return;
+    
+    map->voxelGridColor[pos[0] * 4 + pos[1] * map->width * 4 + pos[2] * map->width * map->height * 4] = voxel[0];
+    map->voxelGridColor[pos[0] * 4 + pos[1] * map->width * 4 + pos[2] * map->width * map->height * 4 + 1] = voxel[1];
+    map->voxelGridColor[pos[0] * 4 + pos[1] * map->width * 4 + pos[2] * map->width * map->height * 4 + 2] = voxel[2];
+    map->voxelGridColor[pos[0] * 4 + pos[1] * map->width * 4 + pos[2] * map->width * map->height * 4 + 3] = voxel[3];
+	map->voxelGridProperties[pos[0] + pos[1] * map->width + pos[2] * map->width * map->height] = voxel[4];
+	map->voxelGridCollision[pos[0] + pos[1] * map->width + pos[2] * map->width * map->height] = collision;
+
+    GLuint voxelGridColorTex, voxelGridPropertiesTex;
+
+    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_3D, voxelGridColorTex);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, map->width, map->height, map->depth, 0, GL_RGBA, GL_FLOAT, map->voxelGridColor);
+    glBindImageTexture(1, voxelGridColorTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+
+    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridPropertiesTex);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_3D, voxelGridPropertiesTex);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, map->width, map->height, map->depth, 0, GL_RED, GL_FLOAT, map->voxelGridProperties);
+    glBindImageTexture(2, voxelGridPropertiesTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
 }
 
 /* Kdyz je zmacknuta klavesa */
@@ -257,6 +301,48 @@ void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
     // Osa y - otaceni kamery
     angle[1] += capRad90_90(((float)ypos - lastMouse[1]) * turnSpeed);
     lastMouse[1] = (float)ypos;
+}
+
+void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+	if (!menu && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
+        int hitVoxel[3] = { -1, -1, -1 };
+		int hitNormal[3] = { 0, 0, 0 };
+
+        int* ptr = (int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        if (ptr) {
+            hitVoxel[0] = ptr[0];
+            hitVoxel[1] = ptr[1];
+            hitVoxel[2] = ptr[2];
+			hitNormal[0] = ptr[3];
+			hitNormal[1] = ptr[4];
+			hitNormal[2] = ptr[5];
+            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        }
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+		int hitNeighbour[3] = { hitVoxel[0] - hitNormal[0], hitVoxel[1] - hitNormal[1], hitVoxel[2] - hitNormal[2] };
+
+		changeVoxel(hitNeighbour, new float[5] { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f }, true);
+	}
+    if (!menu && button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
+        int hitVoxel[3] = { -1, -1, -1 };
+
+        int* ptr = (int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        if (ptr) {
+            hitVoxel[0] = ptr[0];
+            hitVoxel[1] = ptr[1];
+            hitVoxel[2] = ptr[2];
+            glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        }
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+        changeVoxel(hitVoxel, new float[5] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }, false);
+    }
 }
 
 /* Zmena velikosti okna */
@@ -396,6 +482,13 @@ void Player::staticMouseCallback(GLFWwindow* window, double xpos, double ypos) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {
         player->mouseCallback(window, xpos, ypos);
+    }
+}
+
+void Player::staticMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
+    if (player) {
+        player->mouseButtonCallback(window, button, action, mods);
     }
 }
 

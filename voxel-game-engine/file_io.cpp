@@ -126,9 +126,9 @@ void loadFile(Map* map, std::wstring filePath) {
 
     file.close();
 
+    // vytvoreni textur ktere obsahuji mapu
     GLuint voxelGridColorTex, voxelGridPropertiesTex;
 
-    // vytvoreni textur ktere obsahuji mapu
     glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);
     glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

@@ -3,6 +3,11 @@ layout(local_size_x = 8, local_size_y = 4) in;
 layout(rgba32f, binding = 0) uniform image2D screen;
 layout(rgba32f, binding = 1) uniform image3D voxelGridColor;
 layout(r32f,    binding = 2) uniform image3D voxelGridProperties;
+layout(std430,  binding = 3) buffer hitInfo 
+{ 
+    int hitVoxelPos[3];
+    int hitNormal[3];
+};
 
 uniform int renderDist;
 
@@ -107,7 +112,7 @@ Hit raytrace(Ray ray)
 
 void main()
 {	    	
-	const vec3 cameraDir = vec3(cos(angle[1]) * -sin(angle[0]), sin(angle[1]), cos(angle[1]) * -cos(angle[0]));
+    const vec3 cameraDir = vec3(cos(angle[1]) * -sin(angle[0]), sin(angle[1]), cos(angle[1]) * -cos(angle[0]));
 	const vec3 cameraUp =  vec3(sin(angle[1]) *  sin(angle[0]), cos(angle[1]), sin(angle[1]) *  cos(angle[0]));
 
 	const vec2 screenPos = vec2((2.0 * gl_GlobalInvocationID.x / imageSize(screen).x - 1.0) * tan(fov / 2.0), 
@@ -124,6 +129,8 @@ void main()
 	queue[0] = QueueItem(Ray(playerPos, normalize(cameraDir - screenPos.x * cross(cameraDir, cameraUp) + screenPos.y * cameraUp)), vec3(1));
     int queueSize = 1;
     
+    bool first = true;
+
     for (int i = 0; i < queueSize; i++) {
         Hit hit = raytrace(queue[i].ray);
 
@@ -133,6 +140,19 @@ void main()
 		}
         
         if (hit.hit) {                        
+            // pokud je pixel ve stredu obrazovky, zapsat do bufferu
+            if (first && gl_GlobalInvocationID.xy == imageSize(screen) / 2) {
+                hitVoxelPos[0] = hit.voxelPos.x;
+                hitVoxelPos[1] = hit.voxelPos.y;
+                hitVoxelPos[2] = hit.voxelPos.z;
+
+                hitNormal[0] = hit.normal.x;
+                hitNormal[1] = hit.normal.y;
+                hitNormal[2] = hit.normal.z;
+                
+                first = false;
+            }
+            
             if (imageLoad(voxelGridColor, hit.voxelPos).a == 1.0) { 
                 Ray sunRay = Ray(queue[i].ray.pos + queue[i].ray.dir * (hit.distance - 0.001), -sunDir);
                 Hit sunHit = Hit(true, ivec3(0), ivec3(0), 0);
@@ -183,5 +203,17 @@ void main()
 		}
     }
 	
-	imageStore(screen, ivec2(gl_GlobalInvocationID.xy), /*vec4(1.0)*/vec4(color, 1.0));
+    // crosshair
+
+    if ((gl_GlobalInvocationID.y == imageSize(screen).y / 2 && gl_GlobalInvocationID.x < imageSize(screen).x / 2 + 10 && gl_GlobalInvocationID.x > imageSize(screen).x / 2 - 10) ||
+        (gl_GlobalInvocationID.x == imageSize(screen).x / 2 && gl_GlobalInvocationID.y < imageSize(screen).y / 2 + 10 && gl_GlobalInvocationID.y > imageSize(screen).y / 2 - 10)) 
+    {
+        imageStore(screen, ivec2(gl_GlobalInvocationID.xy), vec4(1.0));
+        imageStore(screen, ivec2(gl_GlobalInvocationID.xy), vec4(vec3(1.0) - color, 1.0));
+    }
+    else
+    {
+        imageStore(screen, ivec2(gl_GlobalInvocationID.xy), vec4(color, 1.0));
+    }
+	
 }
