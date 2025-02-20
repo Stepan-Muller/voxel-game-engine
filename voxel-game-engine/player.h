@@ -27,7 +27,8 @@ public:
     Player(Map* _map);
 private:
     Map* map;
-    float pos[3], 
+	float selectedVoxel[5] = { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
+          pos[3], 
           delta[3], 
           angle[2],
           lastMouse[2],
@@ -38,7 +39,8 @@ private:
     int screenWidth = 1280,
         screenHeight = 720,
         renderDistance = 300;
-    bool menu = false,
+	bool selectedVoxelCollision = true,
+         menu = false,
          resetMouse = true,
          vSync = true,
 	     grounded = false;
@@ -51,7 +53,7 @@ private:
          mouseButtonCallback(GLFWwindow* window, int button, int action, int mods),
          windowSizeCallback(GLFWwindow* window, int width, int height),
          movePlayer(GLFWwindow* window),
-		 renderImGui(),
+		 renderUi(),
          changeVoxel(int pos[3], float voxel[5], bool collision);
 	bool checkCollision(int pos[3]),
          checkPlayerCollision(float pos[3]);

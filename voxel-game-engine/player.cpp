@@ -181,7 +181,7 @@ Player::Player(Map* _map) {
         glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
         // UI
-		renderImGui();
+		if (menu) renderUi();
 
         glfwSwapBuffers(window);
     }
@@ -305,7 +305,9 @@ void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 
 void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
-	if (!menu && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    if (menu) return;
+    
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
         int hitVoxel[3] = { -1, -1, -1 };
@@ -325,9 +327,9 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
 
 		int hitNeighbour[3] = { hitVoxel[0] - hitNormal[0], hitVoxel[1] - hitNormal[1], hitVoxel[2] - hitNormal[2] };
 
-		changeVoxel(hitNeighbour, new float[5] { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f }, true);
+		changeVoxel(hitNeighbour, selectedVoxel, selectedVoxelCollision);
 	}
-    if (!menu && button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
         int hitVoxel[3] = { -1, -1, -1 };
@@ -458,13 +460,17 @@ void Player::movePlayer(GLFWwindow* window)
         pos[2] += move[2];
 }
 
-void Player::renderImGui() {
+void Player::renderUi() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("Voxel Engine UI");
-    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Begin("Editor voxelù");
+
+    ImGui::ColorPicker4("Barva voxelu", selectedVoxel);
+	ImGui::SliderFloat("Odrazivost voxelu", &selectedVoxel[4], 0.0f, 1.0f);
+	ImGui::Checkbox("Kolize", &selectedVoxelCollision);
+
     ImGui::End();
 
     ImGui::Render();
