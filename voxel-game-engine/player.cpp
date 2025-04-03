@@ -5,13 +5,13 @@
 Player::Player(Map* _map) {
 	map = _map;
 
-    std::string screenVertexSource = loadShaderSource("vertex.glsl");
+    std::string screenVertexSource = loadShaderSource("shaders/vertex.glsl");
     const GLchar* screenVertexShaderSource = screenVertexSource.c_str();
     
-    std::string screenFragmentSource = loadShaderSource("fragment.glsl");
+    std::string screenFragmentSource = loadShaderSource("shaders/fragment.glsl");
     const GLchar* screenFragmentShaderSource = screenFragmentSource.c_str();
     
-    std::string screenComputeSource = loadShaderSource("compute.glsl");
+    std::string screenComputeSource = loadShaderSource("shaders/compute.glsl");
     const GLchar* screenComputeShaderSource = screenComputeSource.c_str();
 
     GLuint screenTex;
@@ -276,6 +276,16 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
         respawn();
+
+    // test systemu zvuku
+    if (key == GLFW_KEY_P && action == GLFW_PRESS)
+    {
+        ALuint buffer;
+        if (soundSystem.loadWavFile("sounds/test.wav", buffer)) {
+            ALuint source = soundSystem.createSource(buffer);
+            soundSystem.playSound(source);
+        }
+    }
 }
 
 /* Pohyb hrace pomoci mysi */

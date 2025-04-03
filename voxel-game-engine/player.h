@@ -14,6 +14,7 @@
 #include "util.c"
 #include "map.h"
 #include "file_io.h"
+#include "sound.h"
 
 /* Verze OpenGL (4.6) */
 #define OPENGL_MAJOR_VERSION 4
@@ -45,6 +46,7 @@ private:
          vSync = true,
 	     grounded = false;
     GLuint hitBuffer;
+    Sound soundSystem;
 
     std::string loadShaderSource(const std::string& filePath);
     void respawn(),
