@@ -131,14 +131,8 @@ Player::Player(Map* _map) {
 
     glDeleteShader(computeShader);
 
-    // inicializace ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui::StyleColorsDark();  // daarmode
-
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 460");  // Match your shader version
+    // inicializace gui
+	gui = new Gui(window);
 
     // priprava na delta time
     float lastTime = (float)glfwGetTime();
@@ -181,7 +175,7 @@ Player::Player(Map* _map) {
         glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
         // UI
-		if (menu) renderUi();
+		if (menu) gui->render();
 
         glfwSwapBuffers(window);
     }
@@ -189,11 +183,6 @@ Player::Player(Map* _map) {
     // cleanup glfw
     glfwDestroyWindow(window);
     glfwTerminate();
-
-	// cleanup ImGui
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
 
 std::string Player::loadShaderSource(const std::string& filePath) {
@@ -328,7 +317,7 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
 
 		int hitNeighbour[3] = { hitVoxel[0] - hitNormal[0], hitVoxel[1] - hitNormal[1], hitVoxel[2] - hitNormal[2] };
 
-		changeVoxel(hitNeighbour, selectedVoxel, selectedVoxelCollision);
+		changeVoxel(hitNeighbour, gui->selectedVoxel, gui->selectedVoxelCollision);
 	}
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
@@ -469,23 +458,6 @@ void Player::movePlayer(GLFWwindow* window)
 	ALfloat listenerVel[] = { move[0], move[1], move[2] };
 	ALfloat listenerOri[] = { delta[0], 0.0f, delta[1], 0.0f, 1.0f, 0.0f };
 	soundSystem.setPlayerPosition(listenerPos, listenerVel, listenerOri);
-}
-
-void Player::renderUi() {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::Begin("Editor voxelù");
-
-    ImGui::ColorPicker4("Barva voxelu", selectedVoxel);
-	ImGui::SliderFloat("Odrazivost voxelu", &selectedVoxel[4], 0.0f, 1.0f);
-	ImGui::Checkbox("Kolize", &selectedVoxelCollision);
-
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

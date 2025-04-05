@@ -7,14 +7,12 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <imgui.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_opengl3.h>
 
 #include "util.c"
 #include "map.h"
 #include "file_io.h"
 #include "sound.h"
+#include "gui.h"
 
 /* Verze OpenGL (4.6) */
 #define OPENGL_MAJOR_VERSION 4
@@ -28,8 +26,7 @@ public:
     Player(Map* _map);
 private:
     Map* map;
-	float selectedVoxel[5] = { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
-          pos[3], 
+	float pos[3], 
           angle[2],
           lastMouse[2],
           fallSpeed = 0,
@@ -39,13 +36,13 @@ private:
     int screenWidth = 1280,
         screenHeight = 720,
         renderDistance = 300;
-	bool selectedVoxelCollision = true,
-         menu = false,
+	bool menu = false,
          resetMouse = true,
          vSync = true,
 	     grounded = false;
     GLuint hitBuffer;
     Sound soundSystem;
+    Gui* gui;
 
     std::string loadShaderSource(const std::string& filePath);
     void respawn(),
@@ -54,7 +51,6 @@ private:
          mouseButtonCallback(GLFWwindow* window, int button, int action, int mods),
          windowSizeCallback(GLFWwindow* window, int width, int height),
          movePlayer(GLFWwindow* window),
-		 renderUi(),
          changeVoxel(int pos[3], float voxel[5], bool collision);
 	bool checkCollision(int pos[3]),
          checkPlayerCollision(float pos[3]);
