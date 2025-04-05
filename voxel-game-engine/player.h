@@ -30,7 +30,6 @@ private:
     Map* map;
 	float selectedVoxel[5] = { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
           pos[3], 
-          delta[3], 
           angle[2],
           lastMouse[2],
           fallSpeed = 0,

@@ -68,15 +68,32 @@ ALuint Sound::createSource(ALuint buffer)
     alGenSources(1, &source);
     alSourcei(source, AL_BUFFER, buffer);
     sources.push_back(source);
+
+    alSourcef(source, AL_ROLLOFF_FACTOR, 0.1f);
+
     return source;
 }
 
-void Sound::playSound(ALuint source)
+void Sound::playSound(const std::string& filename, ALfloat sourcePos[])
 {
-    alSourcePlay(source);
+    ALuint buffer;
+    if (loadWavFile(filename, buffer)) {
+        ALuint source = createSource(buffer);
+        alSourcefv(source, AL_POSITION, sourcePos);
+        alSourcePlay(source);
+    }
 }
 
-void Sound::stopSound(ALuint source)
+void Sound::playSound(const std::string& filename)
 {
-    alSourceStop(source);
+    ALfloat listenerPos[3];
+    alGetListenerfv(AL_POSITION, listenerPos);
+    playSound(filename, listenerPos);
+}
+
+void Sound::setPlayerPosition(ALfloat listenerPos[], ALfloat listenerVel[], ALfloat listenerOri[])
+{
+	alListenerfv(AL_POSITION, listenerPos);
+	alListenerfv(AL_VELOCITY, listenerVel);
+	alListenerfv(AL_ORIENTATION, listenerOri);
 }

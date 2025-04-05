@@ -209,8 +209,6 @@ void Player::respawn() {
 	pos[2] = map->spawnPos[2];
 	angle[0] = map->spawnAngle[0];
 	angle[1] = map->spawnAngle[1];
-	delta[0] = sin(angle[0]);
-	delta[2] = cos(angle[0]);
 }
 
 // R, G, B, A, odrazivost; kolize
@@ -280,11 +278,7 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
     // test systemu zvuku
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
     {
-        ALuint buffer;
-        if (soundSystem.loadWavFile("sounds/test.wav", buffer)) {
-            ALuint source = soundSystem.createSource(buffer);
-            soundSystem.playSound(source);
-        }
+        soundSystem.playSound("sounds/test.wav");
     }
 }
 
@@ -304,9 +298,6 @@ void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
     // Osa x - otaceni hrace
     angle[0] = capRad360(angle[0] + ((float)xpos - lastMouse[0]) * turnSpeed);
     lastMouse[0] = (float)xpos;
-
-    delta[0] = sin(angle[0]);
-    delta[2] = cos(angle[0]);
 
     // Osa y - otaceni kamery
     angle[1] += capRad90_90(((float)ypos - lastMouse[1]) * turnSpeed);
@@ -419,27 +410,31 @@ void Player::movePlayer(GLFWwindow* window)
 
     float move[3] = {0, 0, 0};
 
+    float delta[2];
+    delta[0] = sin(angle[0]);
+    delta[1] = cos(angle[0]);
+
     if (glfwGetKey(window, GLFW_KEY_W))
     {
         move[0] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
-        move[2] -= delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] -= delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_S))
     {
         move[0] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
-        move[2] += delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] += delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_A))
     {
-        move[0] += delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] += delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
         move[2] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_D))
     {
-        move[0] -= delta[2] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] -= delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
         move[2] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
@@ -468,6 +463,12 @@ void Player::movePlayer(GLFWwindow* window)
     float checkPosZ[3] = { pos[0], pos[1], pos[2] + move[2] };
     if (!checkPlayerCollision(checkPosZ))
         pos[2] += move[2];
+
+    // predani informace o poloze hrace zvukovemu enginu
+	ALfloat listenerPos[] = { pos[0], pos[1], pos[2] };
+	ALfloat listenerVel[] = { move[0], move[1], move[2] };
+	ALfloat listenerOri[] = { delta[0], 0.0f, delta[1], 0.0f, 1.0f, 0.0f };
+	soundSystem.setPlayerPosition(listenerPos, listenerVel, listenerOri);
 }
 
 void Player::renderUi() {
