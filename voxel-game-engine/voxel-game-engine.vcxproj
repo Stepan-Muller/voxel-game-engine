@@ -156,16 +156,11 @@
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="file_io.cpp" />
-    <ClCompile Include="Gui.cpp" />
+    <ClCompile Include="gui.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="util.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="compute.glsl" />
-    <None Include="fragment.glsl" />
-    <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="file_io.h" />

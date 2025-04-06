@@ -26,40 +26,190 @@
 
 class Player {
 public:
+    /**
+     * @brief Constructor for the Player class.
+     *
+     * @param _map Pointer to the map object in which the player is located
+     */
     Player(Map* _map);
 private:
+    /**
+	 * @brief Pointer to the map object in which the player is located.
+     */
     Map* map;
-	float pos[3], 
-          angle[2],
-          lastMouse[2],
-          fallSpeed = 0,
-          deltaTime, 
-          turnSpeed = 0.002f, 
-          fov = 60 * PI / 180.0f,
-          stepTimer = 0.0f;
-    int screenWidth = 1280,
-        screenHeight = 720,
-        renderDistance = 300;
-	bool menu = false,
-         resetMouse = true,
-         vSync = true,
-	     grounded = false;
+    
+    /**
+	 * @brief Position of the player in the map.
+     */
+    float pos[3];
+    
+    /**
+	 * @brief Angle of the player in the map.
+     */
+    float angle[2];
+    
+    /**
+     * @brief Last cursor position.
+     */
+    float lastMouse[2];
+    
+    /**
+     * @brief Sspeed at which the player is currently falling (<0 => the player is rising up).
+     */
+    float fallSpeed = 0;
+    
+    /**
+     * @brief Delta time.
+     */
+    float deltaTime;
+    
+    /**
+     * @brief Speed at which the player turns (mouse sensitivity).
+     */
+    float turnSpeed = 0.002f;
+    
+    /**
+     * @brief Field of view of the camera in radians.
+     */
+    float fov = 60 * PI / 180.0f;
+    
+    /**
+     * @brief timer for footstep sounds.
+     */
+    float stepTimer = 0.0f;
+    
+    /**
+     * @brief Width of the screen in pixels.
+     */
+    int screenWidth = 1280;
+    
+    /**
+     * @brief Height of the screen in pixels.
+     */
+    int screenHeight = 720;
+    
+    /**
+     * @brief Render distance of the camera in voxels.
+     */
+    int renderDistance = 300;
+    
+    /**
+     * @brief Whether the player is currently in the menu.
+     */
+    bool menu = false;
+    
+    /**
+     * @brief Flag for reseting the mouse position when exiting out of the menu.
+     */
+    bool resetMouse = true;
+    
+    /**
+     * @brief Whether the window should use v-sync.
+     */
+    bool vSync = true;
+    
+    /**
+     * @brief Whether the player is currently standing on the ground.
+     */
+    bool grounded = false;
+    
+    /**
+     * @brief Buffer for the voxel in the middle of the screen, used fo world interaction.
+     */
     GLuint hitBuffer;
+    
+    /**
+     * @brief Sound system.
+     */
     Sound sound;
+    
+    /**
+     * @brief Pointer to the gui class.
+     */
     Gui* gui;
 
+    /**
+     * @brief Load shader source code from a file.
+     *
+     * @param filePath Path to the shader file.
+     * @return The shader source code as a string.
+     */
     std::string loadShaderSource(const std::string& filePath);
-    void respawn(),
-         keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
-         mouseCallback(GLFWwindow* window, double xpos, double ypos),
-         mouseButtonCallback(GLFWwindow* window, int button, int action, int mods),
-         windowSizeCallback(GLFWwindow* window, int width, int height),
-         movePlayer(GLFWwindow* window),
-         changeVoxel(int pos[3], float voxel[5], bool collision);
-	bool checkCollision(int pos[3]),
-         checkPlayerCollision(float pos[3]);
-    static void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods),
-                staticMouseCallback(GLFWwindow* window, double xpos, double ypos),
-                staticMouseButtonCallback(GLFWwindow* window, int button, int action, int mods),
-                staticWindowSizeCallback(GLFWwindow* window, int width, int height);
+    
+    /**
+     * @brief Respawn the player at the maps spawn position and angle.
+     */
+    void respawn();
+    
+    /**
+     * @brief Change the voxel at the given position in the map.
+     *
+     * @param pos The position of the voxel to change.
+     * @param voxel The new voxel properties (R, G, B, A, reflectivity).
+     * @param collision Whether the voxel should be a collision voxel.
+     */
+    void changeVoxel(int pos[3], float voxel[5], bool collision);
+    
+    /**
+     * @brief GLFW key callback.
+     */
+    void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    
+    /**
+     * @brief GLFW cursor position callback.
+     */
+    void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+    
+    /**
+     * @brief GLFW mouse button callback.
+     */
+    void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    
+    /**
+     * @brief GLFW window size callback.
+     */
+    void windowSizeCallback(GLFWwindow* window, int width, int height);
+    
+    /**
+     * @brief Check whether the specified voxel is a collision voxel.
+     *
+     * @param pos The position of the voxel.
+     * @return True if there is a collision, false otherwise.
+     */
+    bool checkCollision(int pos[3]);
+    
+    /**
+     * @brief Check whether the player is colliding with the map at the specified location.
+     *
+     * @param pos The position to check for collision.
+     * @return True if there is a collision, false otherwise.
+     */
+    bool checkPlayerCollision(float pos[3]);
+    
+    /**
+     * @brief Move the player based on input and check for collisions.
+     *
+     * @param window The GLFW window.
+     */
+    void movePlayer(GLFWwindow* window);
+    
+    /**
+     * @brief GLFW key callback, made static.
+     */
+    static void staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    
+    /**
+     * @brief GLFW cursor position callback, made static.
+     */
+    static void staticMouseCallback(GLFWwindow* window, double xpos, double ypos);
+    
+    /**
+     * @brief GLFW mouse button callback, made static.
+     */
+    static void staticMouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    
+    /**
+     * @brief GLFW window size callback, made static.
+     */
+    static void staticWindowSizeCallback(GLFWwindow* window, int width, int height);
 };

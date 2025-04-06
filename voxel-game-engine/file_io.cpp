@@ -2,11 +2,6 @@
 
 #include "file_io.h"
 
-/**
- * @brief Save the map to the file selected in a file selection window.
- *
- * @param map Pointer to the map object to save.
- */
 void saveFile(Map* map) {
     OPENFILENAMEW ofn;
     wchar_t path[260] = { }; // 260 - max filepath length
@@ -65,12 +60,6 @@ void saveFile(Map* map) {
     file.close();
 }
 
-/**
- * @brief Load the map from the optionally specified file or the file selected in a file selection window.
- *
- * @param map Pointer to the map object to load to.
- * @param filePath Optional path to the file to load from. If empty, a file selection window will be opened.
- */
 void loadFile(Map* map, std::wstring filePath) {
     if (filePath.empty()) {
         OPENFILENAMEW ofn;

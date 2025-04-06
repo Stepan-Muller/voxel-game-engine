@@ -10,5 +10,17 @@
 
 #include "map.h"
 
-void saveFile(Map* map),
-	 loadFile(Map* map, std::wstring filePath = L"");
+/**
+ * @brief Save the map to the file selected in a file selection window.
+ *
+ * @param map Pointer to the map object to save.
+ */
+void saveFile(Map* map);
+
+/**
+ * @brief Load the map from the optionally specified file or the file selected in a file selection window.
+ *
+ * @param map Pointer to the map object to load to.
+ * @param filePath Optional path to the file to load from. If empty, a file selection window will be opened.
+ */
+void loadFile(Map* map, std::wstring filePath = L"");

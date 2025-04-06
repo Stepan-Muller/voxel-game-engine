@@ -4,7 +4,12 @@
 
 #define PI 3.1415926535f
 
-/* Zastavi radiany na 2PI a 0 */
+/**
+ * @brief Cap radians to the range [0, 2*PI)
+ *
+ * @param a Angle in radians
+ * @return Angle in radians capped to the range [0, 2*PI)
+ */
 static float capRad360(float a)
 {
     if (a > 2 * PI)
@@ -15,7 +20,12 @@ static float capRad360(float a)
     return a;
 }
 
-/* Zastavi radiany na 1/2PI a -1/2PI */
+/**
+ * @brief Cap radians to the range [-PI/2, PI/2]
+ *
+ * @param a Angle in radians
+ * @return Angle in radians capped to the range [-PI/2, PI/2]	
+*/
 static float capRad90_90(float a)
 {
 	if (a > PI / 2)

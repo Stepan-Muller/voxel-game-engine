@@ -2,11 +2,6 @@
 
 #include "player.h"
 
-/**
- * @brief Constructor for the Player class.
- * 
- * @param _map Pointer to the map object in which the player is located
- */
 Player::Player(Map* _map) {
 	map = _map;
 
@@ -190,12 +185,6 @@ Player::Player(Map* _map) {
     glfwTerminate();
 }
 
-/**
- * @brief Load shader source code from a file.
- *
- * @param filePath Path to the shader file.
- * @return The shader source code as a string.
- */
 std::string Player::loadShaderSource(const std::string& filePath) {
     std::ifstream file(filePath);
     std::stringstream buffer;
@@ -203,9 +192,6 @@ std::string Player::loadShaderSource(const std::string& filePath) {
     return buffer.str();
 }
 
-/**
- * @brief Respawn the player at the maps spawn position and angle.
- */
 void Player::respawn() {
 	pos[0] = map->spawnPos[0];
 	pos[1] = map->spawnPos[1];
@@ -214,13 +200,6 @@ void Player::respawn() {
 	angle[1] = map->spawnAngle[1];
 }
 
-/**
- * @brief Change the voxel at the given position in the map.
- *
- * @param pos The position of the voxel to change.
- * @param voxel The new voxel properties (R, G, B, A, reflectivity).
- * @param collision Whether the voxel should be a collision voxel.
- */
 void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
 {
 	if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)map->width || pos[1] >= (int)map->height || pos[2] >= (int)map->depth)
@@ -256,9 +235,6 @@ void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
     glBindImageTexture(2, voxelGridPropertiesTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
 }
 
-/**
- * @brief GLFW key callback.
- */
 void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     // release the mouse in the menu
@@ -288,9 +264,6 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
         respawn();
 }
 
-/**
- * @brief GLFW cursor position callback.
- */
 void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
     // do not move the camera while in the menu
@@ -312,9 +285,6 @@ void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
     lastMouse[1] = (float)ypos;
 }
 
-/**
- * @brief GLFW mouse button callback.
- */
 void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     // do not place voxels while in the menu
@@ -363,9 +333,6 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
     }
 }
 
-/**
- * @brief GLFW window size callback.
- */
 void Player::windowSizeCallback(GLFWwindow* window, int width, int height)
 {
     screenWidth = width;
@@ -375,12 +342,6 @@ void Player::windowSizeCallback(GLFWwindow* window, int width, int height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 }
 
-/**
- * @brief Check whether the specified voxel is a collision voxel.
- *
- * @param pos The position of the voxel.
- * @return True if there is a collision, false otherwise.
- */
 bool Player::checkCollision(int pos[3]) 
 {
     // prevent the player from falling under the map
@@ -393,12 +354,6 @@ bool Player::checkCollision(int pos[3])
     return map->voxelGridCollision[pos[0] + pos[1] * map->width + pos[2] * map->width * map->height];
 }
 
-/**
- * @brief Check whether the player is colliding with the map at the specified location.
- *
- * @param pos The position to check for collision.
- * @return True if there is a collision, false otherwise.
- */
 bool Player::checkPlayerCollision(float pos[3]) 
 {
     int min[3];
@@ -428,11 +383,6 @@ bool Player::checkPlayerCollision(float pos[3])
     return false;
 }
 
-/**
- * @brief Move the player based on input and check for collisions.
- *
- * @param window The GLFW window.
- */
 void Player::movePlayer(GLFWwindow* window)
 {
 	// do not move the player while in the menu
@@ -523,9 +473,6 @@ void Player::movePlayer(GLFWwindow* window)
 	sound.setPlayerPosition(listenerPos, listenerVel, listenerOri);
 }
 
-/**
- * @brief GLFW key callback, made static.
- */
 void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {
@@ -533,9 +480,6 @@ void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int ac
     }
 }
 
-/**
- * @brief GLFW cursor position callback, made static.
- */
 void Player::staticMouseCallback(GLFWwindow* window, double xpos, double ypos) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {
@@ -543,9 +487,6 @@ void Player::staticMouseCallback(GLFWwindow* window, double xpos, double ypos) {
     }
 }
 
-/**
- * @brief GLFW mouse button callback, made static.
- */
 void Player::staticMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {
@@ -553,9 +494,6 @@ void Player::staticMouseButtonCallback(GLFWwindow* window, int button, int actio
     }
 }
 
-/**
- * @brief GLFW window size callback, made static.
- */
 void Player::staticWindowSizeCallback(GLFWwindow* window, int width, int height) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {

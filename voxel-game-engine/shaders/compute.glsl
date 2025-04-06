@@ -42,7 +42,7 @@ Hit raytrace(Ray ray)
 {
     Hit hit = Hit(false, ivec3(ceil(ray.pos)), ivec3(0), 0);
 
-    // barva voxelu na zacatku paprsku
+    // color of the voxel at the start of the ray
     const vec4 voxelColor = imageLoad(voxelGridColor, hit.voxelPos);
 
     const ivec3 step = ivec3(sign(ray.dir));
@@ -134,13 +134,13 @@ void main()
     for (int i = 0; i < queueSize; i++) {
         Hit hit = raytrace(queue[i].ray);
 
-        // pruhlednost
+        // transparency
         if (imageLoad(voxelGridColor, ivec3(ceil(queue[i].ray.pos))).a != 0.0) {
             queue[i].energy *= imageLoad(voxelGridColor, ivec3(ceil(queue[i].ray.pos))).rgb;
 		}
         
         if (hit.hit) {                        
-            // pokud je pixel ve stredu obrazovky, zapsat do bufferu
+            // if this is the voxel at the centre of the screen, save it into the buffer
             if (first && gl_GlobalInvocationID.xy == imageSize(screen) / 2) {
                 hitVoxelPos[0] = hit.voxelPos.x;
                 hitVoxelPos[1] = hit.voxelPos.y;
@@ -177,7 +177,7 @@ void main()
 
                 color += imageLoad(voxelGridColor, hit.voxelPos).rgb * queue[i].energy * sunEnergy * (1 - imageLoad(voxelGridProperties, hit.voxelPos).x);
             } else {
-                // pruhlednost
+                // transparency
                 if (queueSize < REFLECTION_DEPTH) {
                     vec3 energy = queue[i].energy * (1 - imageLoad(voxelGridProperties, hit.voxelPos).x);
                     if (dot(energy, vec3(1)) > MIN_ENERGY) {
@@ -187,7 +187,7 @@ void main()
                 }
             }
             
-            // odraz
+            // reflection
             if (imageLoad(voxelGridProperties, hit.voxelPos).x > 0) {
                 if (queueSize < REFLECTION_DEPTH) {
                     vec3 energy = queue[i].energy * imageLoad(voxelGridProperties, hit.voxelPos).x;
