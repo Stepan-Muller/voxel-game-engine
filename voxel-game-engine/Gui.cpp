@@ -1,5 +1,10 @@
 #include "Gui.h"
 
+/**
+ * @brief Constructor for the Gui class.
+ *
+ * @param window Pointer to the GLFW window
+ */
 Gui::Gui(GLFWwindow* window)
 {
     IMGUI_CHECKVERSION();
@@ -8,9 +13,12 @@ Gui::Gui(GLFWwindow* window)
     ImGui::StyleColorsDark();  // darkmode
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 460");  // Match your shader version
+    ImGui_ImplOpenGL3_Init("#version 460");  // match shader version
 }
 
+/**
+ * @brief Destructor for the Gui class, cleanup.
+ */
 Gui::~Gui()
 {
     ImGui_ImplOpenGL3_Shutdown();
@@ -18,6 +26,9 @@ Gui::~Gui()
     ImGui::DestroyContext();
 }
 
+/**
+ * @brief Render the menu GUI.
+ */
 void Gui::render() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();

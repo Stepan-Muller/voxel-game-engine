@@ -2,12 +2,16 @@
 
 #include "file_io.h"
 
-// Ulozeni mapy do souboru
+/**
+ * @brief Save the map to the file selected in a file selection window.
+ *
+ * @param map Pointer to the map object to save.
+ */
 void saveFile(Map* map) {
     OPENFILENAMEW ofn;
-    wchar_t path[260] = { }; // 260 - max. delka cesty souboru
+    wchar_t path[260] = { }; // 260 - max filepath length
 
-    // nastaveni okna pro vyber souboru
+    // file selection wiundow setup
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = NULL;
@@ -20,7 +24,7 @@ void saveFile(Map* map) {
     ofn.nMaxFileTitle = 0;
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
-    // okno pro vyber souboru
+    // file selection window
     if (GetSaveFileNameW(&ofn) == FALSE) {
         std::cout << "No file selected\n";
         return;
@@ -35,25 +39,25 @@ void saveFile(Map* map) {
         return;
     }
 
-    // velikost mapy
+    // map size
     file.write(reinterpret_cast<char*>(&map->width), sizeof(map->width));
     file.write(reinterpret_cast<char*>(&map->height), sizeof(map->height));
     file.write(reinterpret_cast<char*>(&map->depth), sizeof(map->depth));
 
-    // uhel kamery a hrace
+    // player and camera angle
     file.write(reinterpret_cast<char*>(&map->spawnAngle), 2 * sizeof(float));
 
-    // rychlost pohybu ve scene
+    // movement speed
     file.write(reinterpret_cast<char*>(&map->moveSpeed), sizeof(map->moveSpeed));
 
-    // pozice hrace
+    // player position
     file.write(reinterpret_cast<char*>(&map->spawnPos), 3 * sizeof(float));
 
-    // smer slunce a barva nebe
+    // sun direction and sky color
     file.write(reinterpret_cast<char*>(&map->sunDir), 3 * sizeof(float));
     file.write(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
 
-    // mapa
+    // map
     file.write(reinterpret_cast<char*>(map->voxelGridColor), (std::streamsize)map->width * map->height * map->depth * 4 * sizeof(float));
     file.write(reinterpret_cast<char*>(map->voxelGridProperties), (std::streamsize)map->width * map->height * map->depth * sizeof(float));
 	file.write(reinterpret_cast<char*>(map->voxelGridCollision), (std::streamsize)map->width * map->height * map->depth * sizeof(bool));
@@ -61,13 +65,18 @@ void saveFile(Map* map) {
     file.close();
 }
 
-// Nacteni mapy ze souboru
+/**
+ * @brief Load the map from the optionally specified file or the file selected in a file selection window.
+ *
+ * @param map Pointer to the map object to load to.
+ * @param filePath Optional path to the file to load from. If empty, a file selection window will be opened.
+ */
 void loadFile(Map* map, std::wstring filePath) {
     if (filePath.empty()) {
         OPENFILENAMEW ofn;
-        wchar_t path[260] = { }; // 260 - max. delka cesty souboru
+        wchar_t path[260] = { }; // 260 - max filepath length
 
-        // nastaveni okna pro vyber souboru
+        // file selection wiundow setup
         ZeroMemory(&ofn, sizeof(ofn));
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = NULL;
@@ -80,7 +89,7 @@ void loadFile(Map* map, std::wstring filePath) {
         ofn.lpstrFileTitle = NULL;
         ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-        // okno pro vyber souboru
+        // file selection wiundow
         if (GetOpenFileNameW(&ofn) == FALSE) {
             std::cout << "No file selected\n";
             return;
@@ -96,25 +105,25 @@ void loadFile(Map* map, std::wstring filePath) {
         return;
     }
 
-    // velikost mapy
+    // map size
     file.read(reinterpret_cast<char*>(&map->width), sizeof(map->width));
     file.read(reinterpret_cast<char*>(&map->height), sizeof(map->height));
     file.read(reinterpret_cast<char*>(&map->depth), sizeof(map->depth));
 
-    // uhel kamery a hrace
+    // player and camera angle
     file.read(reinterpret_cast<char*>(&map->spawnAngle), 2 * sizeof(float));
 
-    // rychlost pohybu ve scene
+    // movement speed
     file.read(reinterpret_cast<char*>(&map->moveSpeed), sizeof(map->moveSpeed));
 
-    // pozice hrace
+    // player position
     file.read(reinterpret_cast<char*>(&map->spawnPos), 3 * sizeof(float));
 
-    // smer slunce a barva nebe
+    // sun direction and sky color
     file.read(reinterpret_cast<char*>(&map->sunDir), 3 * sizeof(float));
     file.read(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
 
-    // mapa
+    // map
     map->voxelGridColor = new float[map->width * map->height * map->depth * 4];
     file.read(reinterpret_cast<char*>(map->voxelGridColor), (std::streamsize)map->width * map->height * map->depth * 4 * sizeof(float));
 
@@ -126,7 +135,7 @@ void loadFile(Map* map, std::wstring filePath) {
 
     file.close();
 
-    // vytvoreni textur ktere obsahuji mapu
+	// map texture creation
     GLuint voxelGridColorTex, voxelGridPropertiesTex;
 
     glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);

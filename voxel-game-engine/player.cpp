@@ -2,6 +2,11 @@
 
 #include "player.h"
 
+/**
+ * @brief Constructor for the Player class.
+ * 
+ * @param _map Pointer to the map object in which the player is located
+ */
 Player::Player(Map* _map) {
 	map = _map;
 
@@ -16,7 +21,7 @@ Player::Player(Map* _map) {
 
     GLuint screenTex;
     
-    // Geometrie obrazovky
+    // screen geometry
     GLfloat vertices[20] =
     {
         -1.0f, -1.0f , 0.0f, 0.0f, 0.0f,
@@ -32,12 +37,12 @@ Player::Player(Map* _map) {
 
     glfwInit();
 
-    // nastavení verze OpenGL
+    // OpenGL version selection
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR_VERSION);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // tvorba okna
+    // window creation
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Voxel Game Engine", NULL, NULL);
     if (!window)
     {
@@ -48,7 +53,7 @@ Player::Player(Map* _map) {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(vSync);
 
-    // nastaveni inputù + zmìny velikosti okna
+    // setting GLFW callbacks
     glfwSetKeyCallback(window, staticKeyCallback);
     glfwSetCursorPosCallback(window, staticMouseCallback);
 	glfwSetMouseButtonCallback(window, staticMouseButtonCallback);
@@ -71,7 +76,7 @@ Player::Player(Map* _map) {
     glCreateBuffers(1, &VBO);
     glCreateBuffers(1, &EBO);
 
-    // nabinduje geometrii do bufferù
+    // bindo geometry into the buffers
     glNamedBufferData(VBO, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glNamedBufferData(EBO, sizeof(indices), indices, GL_STATIC_DRAW);
 
@@ -83,11 +88,11 @@ Player::Player(Map* _map) {
     glVertexArrayAttribBinding(VAO, 1, 0);
     glVertexArrayAttribFormat(VAO, 1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat));
 
-    // nabinduje VBO a EBO na VAO
+    // binding VBO and EBO to VAO
     glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 5 * sizeof(GLfloat));
     glVertexArrayElementBuffer(VAO, EBO);
 
-    // nastevení textury
+    // texture setting
     glCreateTextures(GL_TEXTURE_2D, 1, &screenTex);
     glTextureParameteri(screenTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTextureParameteri(screenTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -97,14 +102,14 @@ Player::Player(Map* _map) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
     glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-	// buffer pro voxel ve stredu obrazovky
+	// buffer for the voxel in the middle of the screen
     glGenBuffers(1, &hitBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * sizeof(int), NULL, GL_DYNAMIC_READ);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, hitBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    // screen shadery
+    // screen shaders
     GLuint screenVertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(screenVertexShader, 1, &screenVertexShaderSource, NULL);
     glCompileShader(screenVertexShader);
@@ -131,10 +136,10 @@ Player::Player(Map* _map) {
 
     glDeleteShader(computeShader);
 
-    // inicializace gui
+	// gui initialization   
 	gui = new Gui(window);
 
-    // priprava na delta time
+    // delta time setup
     float lastTime = (float)glfwGetTime();
 
     loadFile(map, L"demo.bin");
@@ -143,19 +148,19 @@ Player::Player(Map* _map) {
     /* Main game loop */
     while (!glfwWindowShouldClose(window))
     {
-        // vypocet delta time
+        // delta time calculation
         deltaTime = (float)glfwGetTime() - lastTime;
         lastTime = (float)glfwGetTime();
 
-        // pohyb hrace
+        // player movement
         movePlayer(window);
 
-        // inputy + zmìna velikosti obrazovky
+        // callbacks
         glfwPollEvents();
 
-        // spusteni compute shaderu
+        // compute shader
         glUseProgram(computeProgram);
-        // parametry compute shaderu
+        // compute shaderu parameters
         glUniform1i(glGetUniformLocation(computeProgram, "renderDist"), renderDistance);
         glUniform2f(glGetUniformLocation(computeProgram, "angle"), angle[0], angle[1]);
         glUniform1f(glGetUniformLocation(computeProgram, "fov"), fov);
@@ -168,23 +173,29 @@ Player::Player(Map* _map) {
 
         // screen shader
         glUseProgram(screenShaderProgram);
-        // prametry screen shaderu
+        // screen shaderu parameters
         glBindTextureUnit(0, screenTex);
         glUniform1i(glGetUniformLocation(screenShaderProgram, "screen"), 0);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
-        // UI
+		// menu gui rendering
 		if (menu) gui->render();
 
         glfwSwapBuffers(window);
     }
 
-    // cleanup glfw
+    // glfw cleanup
     glfwDestroyWindow(window);
     glfwTerminate();
 }
 
+/**
+ * @brief Load shader source code from a file.
+ *
+ * @param filePath Path to the shader file.
+ * @return The shader source code as a string.
+ */
 std::string Player::loadShaderSource(const std::string& filePath) {
     std::ifstream file(filePath);
     std::stringstream buffer;
@@ -192,6 +203,9 @@ std::string Player::loadShaderSource(const std::string& filePath) {
     return buffer.str();
 }
 
+/**
+ * @brief Respawn the player at the maps spawn position and angle.
+ */
 void Player::respawn() {
 	pos[0] = map->spawnPos[0];
 	pos[1] = map->spawnPos[1];
@@ -200,7 +214,13 @@ void Player::respawn() {
 	angle[1] = map->spawnAngle[1];
 }
 
-// R, G, B, A, odrazivost; kolize
+/**
+ * @brief Change the voxel at the given position in the map.
+ *
+ * @param pos The position of the voxel to change.
+ * @param voxel The new voxel properties (R, G, B, A, reflectivity).
+ * @param collision Whether the voxel should be a collision voxel.
+ */
 void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
 {
 	if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)map->width || pos[1] >= (int)map->height || pos[2] >= (int)map->depth)
@@ -236,10 +256,12 @@ void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
     glBindImageTexture(2, voxelGridPropertiesTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
 }
 
-/* Kdyz je zmacknuta klavesa */
+/**
+ * @brief GLFW key callback.
+ */
 void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    // Uvolneni mysi
+    // release the mouse in the menu
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
         menu = !menu;
@@ -250,25 +272,28 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
         resetMouse = true;
     }
 
-    // Ulozeni mapy
+    // map save
     if (menu && key == GLFW_KEY_S && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         saveFile(map);
 
-    // Nacteni mapy
+    // map load
     if (menu && key == GLFW_KEY_O && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
         loadFile(map);
         respawn();
     }
 
+    // respawn
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
         respawn();
 }
 
-/* Pohyb hrace pomoci mysi */
+/**
+ * @brief GLFW cursor position callback.
+ */
 void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
-    // pokud je v menu, nehybat s kamerou
+    // do not move the camera while in the menu
     if (menu) return;
 
     if (resetMouse)
@@ -278,19 +303,24 @@ void Player::mouseCallback(GLFWwindow* window, double xpos, double ypos)
         resetMouse = false;
     }
 
-    // Osa x - otaceni hrace
+    // x axis - player rotation
     angle[0] = capRad360(angle[0] + ((float)xpos - lastMouse[0]) * turnSpeed);
     lastMouse[0] = (float)xpos;
 
-    // Osa y - otaceni kamery
+    // y axis - camera rotation
     angle[1] += capRad90_90(((float)ypos - lastMouse[1]) * turnSpeed);
     lastMouse[1] = (float)ypos;
 }
 
+/**
+ * @brief GLFW mouse button callback.
+ */
 void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
+    // do not place voxels while in the menu
     if (menu) return;
     
+    // voxel placement
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
@@ -313,6 +343,8 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
 
 		changeVoxel(hitNeighbour, gui->selectedVoxel, gui->selectedVoxelCollision);
 	}
+    
+	// voxel removal
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
@@ -331,7 +363,9 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
     }
 }
 
-/* Zmena velikosti okna */
+/**
+ * @brief GLFW window size callback.
+ */
 void Player::windowSizeCallback(GLFWwindow* window, int width, int height)
 {
     screenWidth = width;
@@ -341,9 +375,15 @@ void Player::windowSizeCallback(GLFWwindow* window, int width, int height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 }
 
+/**
+ * @brief Check whether the specified voxel is a collision voxel.
+ *
+ * @param pos The position of the voxel.
+ * @return True if there is a collision, false otherwise.
+ */
 bool Player::checkCollision(int pos[3]) 
 {
-    // zamezit hraci spadnout pod mapu
+    // prevent the player from falling under the map
     if (pos[1] >= (int)map->height)
         return true;
     
@@ -353,7 +393,12 @@ bool Player::checkCollision(int pos[3])
     return map->voxelGridCollision[pos[0] + pos[1] * map->width + pos[2] * map->width * map->height];
 }
 
-// zjisti, zda je na dane pozici kolize
+/**
+ * @brief Check whether the player is colliding with the map at the specified location.
+ *
+ * @param pos The position to check for collision.
+ * @return True if there is a collision, false otherwise.
+ */
 bool Player::checkPlayerCollision(float pos[3]) 
 {
     int min[3];
@@ -383,10 +428,14 @@ bool Player::checkPlayerCollision(float pos[3])
     return false;
 }
 
-/* Pohyb hrace pomoci klaves WSAD */
+/**
+ * @brief Move the player based on input and check for collisions.
+ *
+ * @param window The GLFW window.
+ */
 void Player::movePlayer(GLFWwindow* window)
 {
-    // pokud je v menu, nehybat s hracem
+	// do not move the player while in the menu
     if (menu) return;
 
     int speedMultiplier = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ? 1 : 2;
@@ -435,7 +484,7 @@ void Player::movePlayer(GLFWwindow* window)
 		move[1] += fallSpeed * deltaTime;
 	}
 
-    // kontrola kolizí
+	// collision detection
 	float checkPosX[3] = { pos[0] + move[0], pos[1], pos[2] };
     if (checkPlayerCollision(checkPosX))
         move[0] = 0.0f;
@@ -453,7 +502,7 @@ void Player::movePlayer(GLFWwindow* window)
     pos[1] += move[1];
     pos[2] += move[2];
 
-    // prehrani zvuku kroku
+    // footstep sounds
 	stepTimer -= deltaTime;
     
     if (grounded && (move[0] || move[2]) && stepTimer <= 0.0f)
@@ -462,18 +511,21 @@ void Player::movePlayer(GLFWwindow* window)
 		stepTimer = STEP_COOLDOWN;
     }
 
-    // prehrani zvuku padu (hlastitejsi zvuk kroku)
+    // falling sounds (louder footstep)
     if (grounded && fallSpeed >= 20)
         sound.playSound("sounds/step" + std::to_string(rand() % 6) + ".wav");
         
 
-    // predani informace o poloze hrace zvukovemu enginu
+	// give the sound engine the player position information
 	ALfloat listenerPos[] = { pos[0], pos[1], pos[2] };
 	ALfloat listenerVel[] = { move[0], move[1], move[2] };
 	ALfloat listenerOri[] = { delta[0], 0.0f, delta[1], 0.0f, 1.0f, 0.0f };
 	sound.setPlayerPosition(listenerPos, listenerVel, listenerOri);
 }
 
+/**
+ * @brief GLFW key callback, made static.
+ */
 void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {
@@ -481,6 +533,9 @@ void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int ac
     }
 }
 
+/**
+ * @brief GLFW cursor position callback, made static.
+ */
 void Player::staticMouseCallback(GLFWwindow* window, double xpos, double ypos) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {
@@ -488,6 +543,9 @@ void Player::staticMouseCallback(GLFWwindow* window, double xpos, double ypos) {
     }
 }
 
+/**
+ * @brief GLFW mouse button callback, made static.
+ */
 void Player::staticMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {
@@ -495,6 +553,9 @@ void Player::staticMouseButtonCallback(GLFWwindow* window, int button, int actio
     }
 }
 
+/**
+ * @brief GLFW window size callback, made static.
+ */
 void Player::staticWindowSizeCallback(GLFWwindow* window, int width, int height) {
     Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
     if (player) {
