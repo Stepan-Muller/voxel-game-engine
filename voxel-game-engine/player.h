@@ -21,6 +21,9 @@
 /* Fyzika */
 #define GRAVITY 98.0f
 
+/* Zvuk */
+#define STEP_COOLDOWN 0.5f
+
 class Player {
 public:
     Player(Map* _map);
@@ -32,7 +35,8 @@ private:
           fallSpeed = 0,
           deltaTime, 
           turnSpeed = 0.002f, 
-          fov = 60 * PI / 180.0f;
+          fov = 60 * PI / 180.0f,
+          stepTimer = 0.0f;
     int screenWidth = 1280,
         screenHeight = 720,
         renderDistance = 300;
@@ -41,7 +45,7 @@ private:
          vSync = true,
 	     grounded = false;
     GLuint hitBuffer;
-    Sound soundSystem;
+    Sound sound;
     Gui* gui;
 
     std::string loadShaderSource(const std::string& filePath);

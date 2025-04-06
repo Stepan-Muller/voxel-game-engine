@@ -11,8 +11,8 @@ public:
     Sound();
     ~Sound();
 
-    void playSound(const std::string& filename, ALfloat sourcePos[]),
-         playSound(const std::string& filename),
+    void playSound(const std::string& filename, ALfloat sourcePos[], float volume = 1.0f),
+         playSound(const std::string& filename, float volume = 1.0f),
          setPlayerPosition(ALfloat listenerPos[], ALfloat listenerVel[], ALfloat listenerOri[]);
 
 private:

@@ -263,12 +263,6 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
         respawn();
-
-    // test systemu zvuku
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        soundSystem.playSound("sounds/test.wav");
-    }
 }
 
 /* Pohyb hrace pomoci mysi */
@@ -432,6 +426,8 @@ void Player::movePlayer(GLFWwindow* window)
 		fallSpeed = 0;
         if (glfwGetKey(window, GLFW_KEY_SPACE))
 			fallSpeed = -50;
+
+        
 	}
 	else
 	{
@@ -441,23 +437,41 @@ void Player::movePlayer(GLFWwindow* window)
 
     // kontrola kolizí
 	float checkPosX[3] = { pos[0] + move[0], pos[1], pos[2] };
-    if (!checkPlayerCollision(checkPosX))
-        pos[0] += move[0];
+    if (checkPlayerCollision(checkPosX))
+        move[0] = 0.0f;
 
     float checkPosY[3] = { pos[0], pos[1] + move[1], pos[2] };
     grounded = checkPlayerCollision(checkPosY);
-    if (!grounded)
-        pos[1] += move[1];
+    if (grounded)
+        move[1] = 0.0f;
 
     float checkPosZ[3] = { pos[0], pos[1], pos[2] + move[2] };
-    if (!checkPlayerCollision(checkPosZ))
-        pos[2] += move[2];
+    if (checkPlayerCollision(checkPosZ))
+        move[2] = 0.0f;
+
+    pos[0] += move[0];
+    pos[1] += move[1];
+    pos[2] += move[2];
+
+    // prehrani zvuku kroku
+	stepTimer -= deltaTime;
+    
+    if (grounded && (move[0] || move[2]) && stepTimer <= 0.0f)
+    {
+		sound.playSound("sounds/step" + std::to_string(rand() % 6) + ".wav", 0.1f);
+		stepTimer = STEP_COOLDOWN;
+    }
+
+    // prehrani zvuku padu (hlastitejsi zvuk kroku)
+    if (grounded && fallSpeed >= 20)
+        sound.playSound("sounds/step" + std::to_string(rand() % 6) + ".wav");
+        
 
     // predani informace o poloze hrace zvukovemu enginu
 	ALfloat listenerPos[] = { pos[0], pos[1], pos[2] };
 	ALfloat listenerVel[] = { move[0], move[1], move[2] };
 	ALfloat listenerOri[] = { delta[0], 0.0f, delta[1], 0.0f, 1.0f, 0.0f };
-	soundSystem.setPlayerPosition(listenerPos, listenerVel, listenerOri);
+	sound.setPlayerPosition(listenerPos, listenerVel, listenerOri);
 }
 
 void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
