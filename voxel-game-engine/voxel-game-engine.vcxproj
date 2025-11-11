@@ -158,11 +158,13 @@
     <ClCompile Include="file_io.cpp" />
     <ClCompile Include="gui.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="map.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="chunk.h" />
     <ClInclude Include="file_io.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="map.h" />

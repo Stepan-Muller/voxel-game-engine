@@ -2,7 +2,7 @@
 
 #include "file_io.h"
 
-void saveFile(Map* map) {
+void saveMap(Map* map) {
     OPENFILENAMEW ofn;
     wchar_t path[260] = { }; // 260 - max filepath length
 
@@ -35,9 +35,9 @@ void saveFile(Map* map) {
     }
 
     // map size
-    file.write(reinterpret_cast<char*>(&map->width), sizeof(map->width));
+    file.write(reinterpret_cast<char*>(&map->chunkWidth), sizeof(map->chunkWidth));
     file.write(reinterpret_cast<char*>(&map->height), sizeof(map->height));
-    file.write(reinterpret_cast<char*>(&map->depth), sizeof(map->depth));
+    file.write(reinterpret_cast<char*>(&map->chunkDepth), sizeof(map->chunkDepth));
 
     // player and camera angle
     file.write(reinterpret_cast<char*>(&map->spawnAngle), 2 * sizeof(float));
@@ -53,14 +53,14 @@ void saveFile(Map* map) {
     file.write(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
 
     // map
-    file.write(reinterpret_cast<char*>(map->voxelGridColor), (std::streamsize)map->width * map->height * map->depth * 4 * sizeof(float));
-    file.write(reinterpret_cast<char*>(map->voxelGridProperties), (std::streamsize)map->width * map->height * map->depth * sizeof(float));
-	file.write(reinterpret_cast<char*>(map->voxelGridCollision), (std::streamsize)map->width * map->height * map->depth * sizeof(bool));
+    file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
+    file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
+	file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
 
     file.close();
 }
 
-void loadFile(Map* map, std::wstring filePath) {
+void loadMap(Map* map, std::wstring filePath) {
     if (filePath.empty()) {
         OPENFILENAMEW ofn;
         wchar_t path[260] = { }; // 260 - max filepath length
@@ -95,9 +95,9 @@ void loadFile(Map* map, std::wstring filePath) {
     }
 
     // map size
-    file.read(reinterpret_cast<char*>(&map->width), sizeof(map->width));
+    file.read(reinterpret_cast<char*>(&map->chunkWidth), sizeof(map->chunkWidth));
     file.read(reinterpret_cast<char*>(&map->height), sizeof(map->height));
-    file.read(reinterpret_cast<char*>(&map->depth), sizeof(map->depth));
+    file.read(reinterpret_cast<char*>(&map->chunkDepth), sizeof(map->chunkDepth));
 
     // player and camera angle
     file.read(reinterpret_cast<char*>(&map->spawnAngle), 2 * sizeof(float));
@@ -113,37 +113,14 @@ void loadFile(Map* map, std::wstring filePath) {
     file.read(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
 
     // map
-    map->voxelGridColor = new float[map->width * map->height * map->depth * 4];
-    file.read(reinterpret_cast<char*>(map->voxelGridColor), (std::streamsize)map->width * map->height * map->depth * 4 * sizeof(float));
+    map->getChunk(0, 0).voxelGridColor = new float[map->chunkWidth * map->height * map->chunkDepth * 4];
+    file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
 
-    map->voxelGridProperties = new float[map->width * map->height * map->depth];
-    file.read(reinterpret_cast<char*>(map->voxelGridProperties), (std::streamsize)map->width * map->height * map->depth * sizeof(float));
+    map->getChunk(0, 0).voxelGridProperties = new float[map->chunkWidth * map->height * map->chunkDepth];
+    file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
 
-    map->voxelGridCollision = new bool[map->width * map->height * map->depth];
-	file.read(reinterpret_cast<char*>(map->voxelGridCollision), (std::streamsize)map->width * map->height * map->depth * sizeof(bool));
+    map->getChunk(0, 0).voxelGridCollision = new bool[map->chunkWidth * map->height * map->chunkDepth];
+	file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
 
     file.close();
-
-	// map texture creation
-    GLuint voxelGridColorTex, voxelGridPropertiesTex;
-
-    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_3D, voxelGridColorTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, map->width, map->height, map->depth, 0, GL_RGBA, GL_FLOAT, map->voxelGridColor);
-    glBindImageTexture(1, voxelGridColorTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-
-    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridPropertiesTex);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_3D, voxelGridPropertiesTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, map->width, map->height, map->depth, 0, GL_RED, GL_FLOAT, map->voxelGridProperties);
-    glBindImageTexture(2, voxelGridPropertiesTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
 }

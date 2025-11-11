@@ -10,6 +10,7 @@ layout(std430,  binding = 3) buffer hitInfo
 };
 
 uniform int renderDist;
+uniform int chunkWidth;
 
 uniform vec2 angle;
 uniform float fov;
@@ -50,7 +51,7 @@ Hit raytrace(Ray ray)
     
     vec3 tMax = (hit.voxelPos + step * 0.5 - 0.5 - ray.pos) / ray.dir;
     
-    for (int i = 0; i < renderDist; i++) {
+    for (int i = 0; i < (renderDist * 2 + 2) * chunkWidth; i++) {
         if (hit.voxelPos.x < 0) {
             if (step.x <= 0) return hit;
         } else {
@@ -125,8 +126,10 @@ void main()
 		vec3 energy;
 	};
 
+    const vec2 chunkPos = floor(playerPos.xz / chunkWidth);
+
     QueueItem queue[MAX_QUEUE_SIZE];
-	queue[0] = QueueItem(Ray(playerPos, normalize(cameraDir - screenPos.x * cross(cameraDir, cameraUp) + screenPos.y * cameraUp)), vec3(1));
+	queue[0] = QueueItem(Ray(vec3(playerPos.x - (chunkPos[0] - renderDist) * chunkWidth, playerPos.y, playerPos.z - (chunkPos[1] - renderDist) * chunkWidth) , normalize(cameraDir - screenPos.x * cross(cameraDir, cameraUp) + screenPos.y * cameraUp)), vec3(1));
     int queueSize = 1;
     
     bool first = true;

@@ -36,12 +36,14 @@ private:
     /**
 	 * @brief Pointer to the map object in which the player is located.
      */
-    Map* map;
+    Map map;
     
     /**
 	 * @brief Position of the player in the map.
      */
     float pos[3];
+
+	int lastChunkPos[2];
     
     /**
 	 * @brief Angle of the player in the map.
@@ -91,7 +93,7 @@ private:
     /**
      * @brief Render distance of the camera in voxels.
      */
-    int renderDistance = 300;
+    int renderDistance = 2;
     
     /**
      * @brief Whether the player is currently in the menu.

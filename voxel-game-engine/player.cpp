@@ -3,8 +3,6 @@
 #include "player.h"
 
 Player::Player(Map* _map) {
-	map = _map;
-
     std::string screenVertexSource = loadShaderSource("shaders/vertex.glsl");
     const GLchar* screenVertexShaderSource = screenVertexSource.c_str();
     
@@ -71,7 +69,7 @@ Player::Player(Map* _map) {
     glCreateBuffers(1, &VBO);
     glCreateBuffers(1, &EBO);
 
-    // bindo geometry into the buffers
+    // bind geometry into the buffers
     glNamedBufferData(VBO, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glNamedBufferData(EBO, sizeof(indices), indices, GL_STATIC_DRAW);
 
@@ -137,7 +135,7 @@ Player::Player(Map* _map) {
     // delta time setup
     float lastTime = (float)glfwGetTime();
 
-    loadFile(map, L"demo.bin");
+    loadMap(&map, L"demo.bin");
     respawn();
 
     /* Main game loop */
@@ -150,6 +148,15 @@ Player::Player(Map* _map) {
         // player movement
         movePlayer(window);
 
+        // chunk update
+        int chunkPos[2] = {floor(pos[0] / (&map)->chunkWidth), floor(pos[2] / (&map)->chunkWidth)};
+        //if (chunkPos[0] != lastChunkPos[0] || chunkPos[1] != lastChunkPos[1])
+        //{
+            lastChunkPos[0] = chunkPos[0];
+            lastChunkPos[1] = chunkPos[1];
+            (&map)->updateChunks(chunkPos, renderDistance);
+        //}
+
         // callbacks
         glfwPollEvents();
 
@@ -157,11 +164,12 @@ Player::Player(Map* _map) {
         glUseProgram(computeProgram);
         // compute shaderu parameters
         glUniform1i(glGetUniformLocation(computeProgram, "renderDist"), renderDistance);
+		glUniform1i(glGetUniformLocation(computeProgram, "chunkWidth"), (&map)->chunkWidth);
         glUniform2f(glGetUniformLocation(computeProgram, "angle"), angle[0], angle[1]);
         glUniform1f(glGetUniformLocation(computeProgram, "fov"), fov);
         glUniform3f(glGetUniformLocation(computeProgram, "playerPos"), pos[0], pos[1], pos[2]);
-        glUniform3f(glGetUniformLocation(computeProgram, "sunDir"), map->sunDir[0], map->sunDir[1], map->sunDir[2]);
-        glUniform3f(glGetUniformLocation(computeProgram, "skyColor"), map->skyColor[0], map->skyColor[1], map->skyColor[2]);
+        glUniform3f(glGetUniformLocation(computeProgram, "sunDir"), (&map)->sunDir[0], (&map)->sunDir[1], (&map)->sunDir[2]);
+        glUniform3f(glGetUniformLocation(computeProgram, "skyColor"), (&map)->skyColor[0], (&map)->skyColor[1], (&map)->skyColor[2]);
 
         glDispatchCompute(screenWidth / 8 + 1, screenHeight / 4 + 1, 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -193,24 +201,24 @@ std::string Player::loadShaderSource(const std::string& filePath) {
 }
 
 void Player::respawn() {
-	pos[0] = map->spawnPos[0];
-	pos[1] = map->spawnPos[1];
-	pos[2] = map->spawnPos[2];
-	angle[0] = map->spawnAngle[0];
-	angle[1] = map->spawnAngle[1];
+	pos[0] = (&map)->spawnPos[0];
+	pos[1] = (&map)->spawnPos[1];
+	pos[2] = (&map)->spawnPos[2];
+	angle[0] = (&map)->spawnAngle[0];
+	angle[1] = (&map)->spawnAngle[1];
 }
 
 void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
 {
-	if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)map->width || pos[1] >= (int)map->height || pos[2] >= (int)map->depth)
+	if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)(&map)->chunkWidth || pos[1] >= (int)(&map)->height || pos[2] >= (int)(&map)->chunkDepth)
 		return;
     
-    map->voxelGridColor[pos[0] * 4 + pos[1] * map->width * 4 + pos[2] * map->width * map->height * 4] = voxel[0];
-    map->voxelGridColor[pos[0] * 4 + pos[1] * map->width * 4 + pos[2] * map->width * map->height * 4 + 1] = voxel[1];
-    map->voxelGridColor[pos[0] * 4 + pos[1] * map->width * 4 + pos[2] * map->width * map->height * 4 + 2] = voxel[2];
-    map->voxelGridColor[pos[0] * 4 + pos[1] * map->width * 4 + pos[2] * map->width * map->height * 4 + 3] = voxel[3];
-	map->voxelGridProperties[pos[0] + pos[1] * map->width + pos[2] * map->width * map->height] = voxel[4];
-	map->voxelGridCollision[pos[0] + pos[1] * map->width + pos[2] * map->width * map->height] = collision;
+    (&map)->getChunk(0, 0).voxelGridColor[pos[0] * 4 + pos[1] * (&map)->chunkWidth * 4 + pos[2] * (&map)->chunkWidth * (&map)->height * 4] = voxel[0];
+    (&map)->getChunk(0, 0).voxelGridColor[pos[0] * 4 + pos[1] * (&map)->chunkWidth * 4 + pos[2] * (&map)->chunkWidth * (&map)->height * 4 + 1] = voxel[1];
+    (&map)->getChunk(0, 0).voxelGridColor[pos[0] * 4 + pos[1] * (&map)->chunkWidth * 4 + pos[2] * (&map)->chunkWidth * (&map)->height * 4 + 2] = voxel[2];
+    (&map)->getChunk(0, 0).voxelGridColor[pos[0] * 4 + pos[1] * (&map)->chunkWidth * 4 + pos[2] * (&map)->chunkWidth * (&map)->height * 4 + 3] = voxel[3];
+    (&map)->getChunk(0, 0).voxelGridProperties[pos[0] + pos[1] * (&map)->chunkWidth + pos[2] * (&map)->chunkWidth * (&map)->height] = voxel[4];
+    (&map)->getChunk(0, 0).voxelGridCollision[pos[0] + pos[1] * (&map)->chunkWidth + pos[2] * (&map)->chunkWidth * (&map)->height] = collision;
 
     GLuint voxelGridColorTex, voxelGridPropertiesTex;
 
@@ -221,7 +229,7 @@ void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
     glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_3D, voxelGridColorTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, map->width, map->height, map->depth, 0, GL_RGBA, GL_FLOAT, map->voxelGridColor);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, (&map)->chunkWidth, (&map)->height, (&map)->chunkDepth, 0, GL_RGBA, GL_FLOAT, (&map)->getChunk(0, 0).voxelGridColor);
     glBindImageTexture(1, voxelGridColorTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
 
     glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridPropertiesTex);
@@ -231,7 +239,7 @@ void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
     glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_3D, voxelGridPropertiesTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, map->width, map->height, map->depth, 0, GL_RED, GL_FLOAT, map->voxelGridProperties);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, (&map)->chunkWidth, (&map)->height, (&map)->chunkDepth, 0, GL_RED, GL_FLOAT, (&map)->getChunk(0, 0).voxelGridProperties);
     glBindImageTexture(2, voxelGridPropertiesTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
 }
 
@@ -250,12 +258,12 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
     // map save
     if (menu && key == GLFW_KEY_S && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        saveFile(map);
+        saveMap(&map);
 
     // map load
     if (menu && key == GLFW_KEY_O && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
-        loadFile(map);
+        loadMap(&map);
         respawn();
     }
 
@@ -345,13 +353,13 @@ void Player::windowSizeCallback(GLFWwindow* window, int width, int height)
 bool Player::checkCollision(int pos[3]) 
 {
     // prevent the player from falling under the map
-    if (pos[1] >= (int)map->height)
+    if (pos[1] >= (int)(&map)->height)
         return true;
     
-    if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)map->width || pos[2] >= (int)map->depth)
+    if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)(&map)->chunkWidth || pos[2] >= (int)(&map)->chunkDepth)
 		return false;
     
-    return map->voxelGridCollision[pos[0] + pos[1] * map->width + pos[2] * map->width * map->height];
+    return (&map)->getChunk(0, 0).voxelGridCollision[pos[0] + pos[1] * (&map)->chunkWidth + pos[2] * (&map)->chunkWidth * (&map)->height];
 }
 
 bool Player::checkPlayerCollision(float pos[3]) 
@@ -398,26 +406,26 @@ void Player::movePlayer(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_W))
     {
-        move[0] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
-        move[2] -= delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] -= delta[0] * deltaTime * (&map)->moveSpeed * speedMultiplier;
+        move[2] -= delta[1] * deltaTime * (&map)->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_S))
     {
-        move[0] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
-        move[2] += delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] += delta[0] * deltaTime * (&map)->moveSpeed * speedMultiplier;
+        move[2] += delta[1] * deltaTime * (&map)->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_A))
     {
-        move[0] += delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
-        move[2] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] += delta[1] * deltaTime * (&map)->moveSpeed * speedMultiplier;
+        move[2] -= delta[0] * deltaTime * (&map)->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_D))
     {
-        move[0] -= delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
-        move[2] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[0] -= delta[1] * deltaTime * (&map)->moveSpeed * speedMultiplier;
+        move[2] += delta[0] * deltaTime * (&map)->moveSpeed * speedMultiplier;
     }
 
     if (grounded)
@@ -425,8 +433,6 @@ void Player::movePlayer(GLFWwindow* window)
 		fallSpeed = 0;
         if (glfwGetKey(window, GLFW_KEY_SPACE))
 			fallSpeed = -50;
-
-        
 	}
 	else
 	{
