@@ -150,12 +150,12 @@ Player::Player(Map* _map) {
 
         // chunk update
         int chunkPos[2] = {floor(pos[0] / (&map)->chunkWidth), floor(pos[2] / (&map)->chunkWidth)};
-        //if (chunkPos[0] != lastChunkPos[0] || chunkPos[1] != lastChunkPos[1])
-        //{
+        if (chunkPos[0] != lastChunkPos[0] || chunkPos[1] != lastChunkPos[1])
+        {
             lastChunkPos[0] = chunkPos[0];
             lastChunkPos[1] = chunkPos[1];
             (&map)->updateChunks(chunkPos, renderDistance);
-        //}
+        }
 
         // callbacks
         glfwPollEvents();
@@ -206,41 +206,6 @@ void Player::respawn() {
 	pos[2] = (&map)->spawnPos[2];
 	angle[0] = (&map)->spawnAngle[0];
 	angle[1] = (&map)->spawnAngle[1];
-}
-
-void Player::changeVoxel(int pos[3], float voxel[5], bool collision)
-{
-	if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)(&map)->chunkWidth || pos[1] >= (int)(&map)->height || pos[2] >= (int)(&map)->chunkDepth)
-		return;
-    
-    (&map)->getChunk(0, 0).voxelGridColor[pos[0] * 4 + pos[1] * (&map)->chunkWidth * 4 + pos[2] * (&map)->chunkWidth * (&map)->height * 4] = voxel[0];
-    (&map)->getChunk(0, 0).voxelGridColor[pos[0] * 4 + pos[1] * (&map)->chunkWidth * 4 + pos[2] * (&map)->chunkWidth * (&map)->height * 4 + 1] = voxel[1];
-    (&map)->getChunk(0, 0).voxelGridColor[pos[0] * 4 + pos[1] * (&map)->chunkWidth * 4 + pos[2] * (&map)->chunkWidth * (&map)->height * 4 + 2] = voxel[2];
-    (&map)->getChunk(0, 0).voxelGridColor[pos[0] * 4 + pos[1] * (&map)->chunkWidth * 4 + pos[2] * (&map)->chunkWidth * (&map)->height * 4 + 3] = voxel[3];
-    (&map)->getChunk(0, 0).voxelGridProperties[pos[0] + pos[1] * (&map)->chunkWidth + pos[2] * (&map)->chunkWidth * (&map)->height] = voxel[4];
-    (&map)->getChunk(0, 0).voxelGridCollision[pos[0] + pos[1] * (&map)->chunkWidth + pos[2] * (&map)->chunkWidth * (&map)->height] = collision;
-
-    GLuint voxelGridColorTex, voxelGridPropertiesTex;
-
-    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_3D, voxelGridColorTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, (&map)->chunkWidth, (&map)->height, (&map)->chunkDepth, 0, GL_RGBA, GL_FLOAT, (&map)->getChunk(0, 0).voxelGridColor);
-    glBindImageTexture(1, voxelGridColorTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-
-    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridPropertiesTex);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_3D, voxelGridPropertiesTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, (&map)->chunkWidth, (&map)->height, (&map)->chunkDepth, 0, GL_RED, GL_FLOAT, (&map)->getChunk(0, 0).voxelGridProperties);
-    glBindImageTexture(2, voxelGridPropertiesTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
 }
 
 void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -317,9 +282,13 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
         }
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+        if (hitNormal[0] == 0 && hitNormal[1] == 0 && hitNormal[2] == 0)
+            return;
+
 		int hitNeighbour[3] = { hitVoxel[0] - hitNormal[0], hitVoxel[1] - hitNormal[1], hitVoxel[2] - hitNormal[2] };
 
-		changeVoxel(hitNeighbour, gui->selectedVoxel, gui->selectedVoxelCollision);
+		(&map)->changeVoxel(hitNeighbour, gui->selectedVoxel, gui->selectedVoxelCollision);
+        (&map)->updateChunks(lastChunkPos, renderDistance);
 	}
     
 	// voxel removal
@@ -327,17 +296,25 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
     {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, hitBuffer);
         int hitVoxel[3] = { -1, -1, -1 };
+        int hitNormal[3] = { 0, 0, 0 };
 
         int* ptr = (int*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
         if (ptr) {
             hitVoxel[0] = ptr[0];
             hitVoxel[1] = ptr[1];
             hitVoxel[2] = ptr[2];
+            hitNormal[0] = ptr[3];
+            hitNormal[1] = ptr[4];
+            hitNormal[2] = ptr[5];
             glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
         }
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-        changeVoxel(hitVoxel, new float[5] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }, false);
+		if (hitNormal[0] == 0 && hitNormal[1] == 0 && hitNormal[2] == 0)
+			return;
+
+        (&map)->changeVoxel(hitVoxel, new float[5] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }, false);
+        (&map)->updateChunks(lastChunkPos, renderDistance);
     }
 }
 
@@ -348,18 +325,6 @@ void Player::windowSizeCallback(GLFWwindow* window, int width, int height)
 
     glViewport(0, 0, screenWidth, screenHeight);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
-}
-
-bool Player::checkCollision(int pos[3]) 
-{
-    // prevent the player from falling under the map
-    if (pos[1] >= (int)(&map)->height)
-        return true;
-    
-    if (pos[0] < 0 || pos[1] < 0 || pos[2] < 0 || pos[0] >= (int)(&map)->chunkWidth || pos[2] >= (int)(&map)->chunkDepth)
-		return false;
-    
-    return (&map)->getChunk(0, 0).voxelGridCollision[pos[0] + pos[1] * (&map)->chunkWidth + pos[2] * (&map)->chunkWidth * (&map)->height];
 }
 
 bool Player::checkPlayerCollision(float pos[3]) 
@@ -382,7 +347,7 @@ bool Player::checkPlayerCollision(float pos[3])
             {
                 int voxelPos[3] = {x, y, z};
                 
-                if (checkCollision(voxelPos))
+                if ((&map)->checkCollision(voxelPos))
                     return true;
             }
         }

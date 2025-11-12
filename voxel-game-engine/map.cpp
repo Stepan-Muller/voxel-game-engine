@@ -2,6 +2,93 @@
 
 #include "map.h"
 
+void Map::updateChunks(int centerChunkPos[2], int renderDistance)
+{
+    // map texture creation
+    GLuint voxelGridColorTex, voxelGridPropertiesTex;
+
+    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_3D, voxelGridColorTex);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, chunkWidth * (2 * renderDistance + 1), height, chunkDepth * (2 * renderDistance + 1), 0, GL_RGBA, GL_FLOAT, nullptr);
+    for (int x = 0; x <= 2 * renderDistance; x++)
+        for (int z = 0; z <= 2 * renderDistance; z++)
+        {
+            int chunkPos[2] = { centerChunkPos[0] + x - renderDistance, centerChunkPos[1] + z - renderDistance };
+            glTexSubImage3D(GL_TEXTURE_3D, 0, x * chunkWidth, 0, z * chunkDepth, chunkWidth, height, chunkDepth, GL_RGBA, GL_FLOAT, getChunk(chunkPos).voxelGridColor);
+        }
+    glBindImageTexture(1, voxelGridColorTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+
+    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridPropertiesTex);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_3D, voxelGridPropertiesTex);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, chunkWidth * (2 * renderDistance + 1), height, chunkDepth * (2 * renderDistance + 1), 0, GL_RED, GL_FLOAT, nullptr);
+    for (int x = 0; x <= 2 * renderDistance; x++)
+        for (int z = 0; z <= 2 * renderDistance; z++)
+        {
+			int chunkPos[2] = { centerChunkPos[0] + x - renderDistance, centerChunkPos[1] + z - renderDistance };
+            glTexSubImage3D(GL_TEXTURE_3D, 0, x * chunkWidth, 0, z * chunkDepth, chunkWidth, height, chunkDepth, GL_RED, GL_FLOAT, getChunk(chunkPos).voxelGridProperties);
+        }
+    glBindImageTexture(2, voxelGridPropertiesTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
+
+    // remove distant chunks
+    for (auto it = chunks.begin(); it != chunks.end(); ) {
+        int x = it->first.first;
+        int z = it->first.second;
+        if (abs(x - centerChunkPos[0]) > renderDistance + 1 || abs(z - centerChunkPos[1]) > renderDistance + 1) {
+            delete[] it->second.voxelGridColor;
+            delete[] it->second.voxelGridProperties;
+            delete[] it->second.voxelGridCollision;
+            it = chunks.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+}
+
+void Map::changeVoxel(int pos[3], float voxel[5], bool collision)
+{
+    int chunkPos[2] = { floor((float)pos[0] / chunkWidth), floor((float)pos[2] / chunkWidth) };
+
+	pos[0] = pos[0] - chunkPos[0] * chunkWidth;
+	pos[2] = pos[2] - chunkPos[1] * chunkWidth;
+    
+    getChunk(chunkPos).voxelGridColor[pos[0] * 4 + pos[1] * chunkWidth * 4 + pos[2] * chunkWidth * height * 4] = voxel[0];
+    getChunk(chunkPos).voxelGridColor[pos[0] * 4 + pos[1] * chunkWidth * 4 + pos[2] * chunkWidth * height * 4 + 1] = voxel[1];
+    getChunk(chunkPos).voxelGridColor[pos[0] * 4 + pos[1] * chunkWidth * 4 + pos[2] * chunkWidth * height * 4 + 2] = voxel[2];
+    getChunk(chunkPos).voxelGridColor[pos[0] * 4 + pos[1] * chunkWidth * 4 + pos[2] * chunkWidth * height * 4 + 3] = voxel[3];
+    getChunk(chunkPos).voxelGridProperties[pos[0] + pos[1] * chunkWidth + pos[2] * chunkWidth * height] = voxel[4];
+    getChunk(chunkPos).voxelGridCollision[pos[0] + pos[1] * chunkWidth + pos[2] * chunkWidth * height] = collision;
+
+	getChunk(chunkPos).edited = true;
+}
+
+bool Map::checkCollision(int pos[3])
+{
+    // prevent the player from falling under the map
+    if (pos[1] >= (int)height)
+        return true;
+
+    if (pos[1] < 0)
+        return false;
+
+    int chunkPos[2] = { floor((float)pos[0] / chunkWidth), floor((float)pos[2] / chunkWidth) };
+	
+    pos[0] = pos[0] - chunkPos[0] * chunkWidth;
+    pos[2] = pos[2] - chunkPos[1] * chunkWidth;
+
+    return getChunk(chunkPos).voxelGridCollision[pos[0] + pos[1] * chunkWidth + pos[2] * chunkWidth * height];
+}
+
 Chunk Map::createChunk(std::pair<int, int> coord) {
     Chunk chunk;
 
@@ -45,47 +132,15 @@ Chunk Map::createChunk(std::pair<int, int> coord) {
     return chunk;
 }
 
-void Map::updateChunks(int chunkPos[2], int renderDistance)
-{
-    // map texture creation
-    GLuint voxelGridColorTex, voxelGridPropertiesTex;
-
-    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridColorTex);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridColorTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_3D, voxelGridColorTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, chunkWidth * (2 * renderDistance + 1), height, chunkDepth * (2 * renderDistance + 1), 0, GL_RGBA, GL_FLOAT, nullptr);
-    for (int x = 0; x <= (2 * renderDistance + 1); x++)
-        for (int z = 0; z <= (2 * renderDistance + 1); z++)
-            glTexSubImage3D(GL_TEXTURE_3D, 0, x * chunkWidth, 0, z * chunkDepth, chunkWidth, height, chunkDepth, GL_RGBA, GL_FLOAT, getChunk(chunkPos[0] + x - renderDistance, chunkPos[1] + z - renderDistance).voxelGridColor);
-    glBindImageTexture(1, voxelGridColorTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-
-    glCreateTextures(GL_TEXTURE_3D, 1, &voxelGridPropertiesTex);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(voxelGridPropertiesTex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_3D, voxelGridPropertiesTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, chunkWidth * (2 * renderDistance + 1), height, chunkDepth * (2 * renderDistance + 1), 0, GL_RED, GL_FLOAT, nullptr);
-    for (int x = 0; x <= (2 * renderDistance + 1); x++)
-        for (int z = 0; z <= (2 * renderDistance + 1); z++)
-            glTexSubImage3D(GL_TEXTURE_3D, 0, x * chunkWidth, 0, z * chunkDepth, chunkWidth, height, chunkDepth, GL_RED, GL_FLOAT, getChunk(chunkPos[0] + x - renderDistance, chunkPos[1] + z - renderDistance).voxelGridProperties);
-    glBindImageTexture(2, voxelGridPropertiesTex, 0, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
-}
-
 // Get a chunk at (x,z), create it if it doesn't exist
-Chunk& Map::getChunk(int x, int z) {
-    std::pair<int, int> coord = { x, z };
+Chunk& Map::getChunk(int chunkPos[2]) {
+    std::pair<int, int> coord = { chunkPos[0], chunkPos[1] };
 
     auto it = chunks.find(coord);
     if (it != chunks.end()) {
         return it->second;
     }
-
+	
     // vytvoøit neexistující chunk
     Chunk newChunk = createChunk(coord);
     chunks[coord] = newChunk;

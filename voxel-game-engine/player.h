@@ -144,15 +144,6 @@ private:
     void respawn();
     
     /**
-     * @brief Change the voxel at the given position in the map.
-     *
-     * @param pos The position of the voxel to change.
-     * @param voxel The new voxel properties (R, G, B, A, reflectivity).
-     * @param collision Whether the voxel should be a collision voxel.
-     */
-    void changeVoxel(int pos[3], float voxel[5], bool collision);
-    
-    /**
      * @brief GLFW key callback.
      */
     void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -171,14 +162,6 @@ private:
      * @brief GLFW window size callback.
      */
     void windowSizeCallback(GLFWwindow* window, int width, int height);
-    
-    /**
-     * @brief Check whether the specified voxel is a collision voxel.
-     *
-     * @param pos The position of the voxel.
-     * @return True if there is a collision, false otherwise.
-     */
-    bool checkCollision(int pos[3]);
     
     /**
      * @brief Check whether the player is colliding with the map at the specified location.

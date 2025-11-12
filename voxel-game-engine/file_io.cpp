@@ -53,9 +53,9 @@ void saveMap(Map* map) {
     file.write(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
 
     // map
-    file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
-    file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
-	file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
+    //file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
+    //file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
+	//file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
 
     file.close();
 }
@@ -113,14 +113,14 @@ void loadMap(Map* map, std::wstring filePath) {
     file.read(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
 
     // map
-    map->getChunk(0, 0).voxelGridColor = new float[map->chunkWidth * map->height * map->chunkDepth * 4];
-    file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
+    //map->getChunk(0, 0).voxelGridColor = new float[map->chunkWidth * map->height * map->chunkDepth * 4];
+    //file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
 
-    map->getChunk(0, 0).voxelGridProperties = new float[map->chunkWidth * map->height * map->chunkDepth];
-    file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
+    //map->getChunk(0, 0).voxelGridProperties = new float[map->chunkWidth * map->height * map->chunkDepth];
+    //file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
 
-    map->getChunk(0, 0).voxelGridCollision = new bool[map->chunkWidth * map->height * map->chunkDepth];
-	file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
+    //map->getChunk(0, 0).voxelGridCollision = new bool[map->chunkWidth * map->height * map->chunkDepth];
+	//file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
 
     file.close();
 }

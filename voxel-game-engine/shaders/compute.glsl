@@ -126,7 +126,9 @@ void main()
 		vec3 energy;
 	};
 
-    const vec2 chunkPos = floor(playerPos.xz / chunkWidth);
+    
+
+    const ivec2 chunkPos = ivec2(floor(playerPos.xz / chunkWidth));
 
     QueueItem queue[MAX_QUEUE_SIZE];
 	queue[0] = QueueItem(Ray(vec3(playerPos.x - (chunkPos[0] - renderDist) * chunkWidth, playerPos.y, playerPos.z - (chunkPos[1] - renderDist) * chunkWidth) , normalize(cameraDir - screenPos.x * cross(cameraDir, cameraUp) + screenPos.y * cameraUp)), vec3(1));
@@ -145,15 +147,21 @@ void main()
         if (hit.hit) {                        
             // if this is the voxel at the centre of the screen, save it into the buffer
             if (first && gl_GlobalInvocationID.xy == imageSize(screen) / 2) {
-                hitVoxelPos[0] = hit.voxelPos.x;
-                hitVoxelPos[1] = hit.voxelPos.y;
-                hitVoxelPos[2] = hit.voxelPos.z;
+                if (hit.hit) {
+                    hitVoxelPos[0] = hit.voxelPos.x + (chunkPos[0] - renderDist) * chunkWidth;
+                    hitVoxelPos[1] = hit.voxelPos.y;
+                    hitVoxelPos[2] = hit.voxelPos.z + (chunkPos[1] - renderDist) * chunkWidth;
 
-                hitNormal[0] = hit.normal.x;
-                hitNormal[1] = hit.normal.y;
-                hitNormal[2] = hit.normal.z;
-                
-                first = false;
+                    hitNormal[0] = hit.normal.x;
+                    hitNormal[1] = hit.normal.y;
+                    hitNormal[2] = hit.normal.z;
+                    
+                    first = false;
+                } else {
+                    hitNormal[0] = 0;
+                    hitNormal[1] = 0;
+                    hitNormal[2] = 0;
+                }
             }
             
             if (imageLoad(voxelGridColor, hit.voxelPos).a == 1.0) { 

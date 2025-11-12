@@ -15,4 +15,6 @@ struct Chunk {
 	 * @brief Pointer to a grid of the boolean voxel parameters (collision).
 	 */
 	bool* voxelGridCollision;
+
+	bool edited = false;
 };
