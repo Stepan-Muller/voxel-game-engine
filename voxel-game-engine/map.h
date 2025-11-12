@@ -1,13 +1,14 @@
 #pragma once
 
+#include "chunk.h"
+
 #include <unordered_map>
 #include <tuple>
 #include <cstring>
+#include <string>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
-#include "chunk.h"
 
 struct ChunkCoordHash {
 	std::size_t operator()(const std::pair<int, int>& k) const {
@@ -57,7 +58,10 @@ public:
 	 */
 	float spawnAngle[2];
 
+	std::wstring filePath;
+
 	void updateChunks(int centerChunkPos[2], int renderDistance);
+	void saveChunks();
 	void changeVoxel(int pos[3], float voxel[5], bool collision);
 
 	/**
@@ -67,10 +71,10 @@ public:
 	 * @return True if there is a collision, false otherwise.
 	 */
 	bool checkCollision(int pos[3]);
+	Chunk& getChunk(int chunkPos[2]);
 
 private:
 	std::unordered_map<std::pair<int, int>, Chunk, ChunkCoordHash> chunks;
 
 	Chunk createChunk(std::pair<int, int> coord);
-	Chunk& getChunk(int chunkPos[2]);
 };

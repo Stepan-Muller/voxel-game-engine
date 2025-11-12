@@ -2,32 +2,8 @@
 
 #include "file_io.h"
 
-void saveMap(Map* map) {
-    OPENFILENAMEW ofn;
-    wchar_t path[260] = { }; // 260 - max filepath length
-
-    // file selection wiundow setup
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = NULL;
-    ofn.lpstrFile = path;
-    ofn.lpstrFile[0] = L'\0';
-    ofn.nMaxFile = sizeof(path);
-    ofn.lpstrFilter = L"All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-
-    // file selection window
-    if (GetSaveFileNameW(&ofn) == FALSE) {
-        std::cout << "No file selected\n";
-        return;
-    }
-
-    std::wstring filePath = ofn.lpstrFile;
-
-    std::ofstream file(filePath, std::ios::binary);
+void saveMeta(Map* map) {
+    std::ofstream file((std::filesystem::path(map->filePath) / "meta.bin").string(), std::ios::binary);
 
     if (!file.is_open()) {
         std::cout << "Failed to open file for writing\n";
@@ -52,42 +28,41 @@ void saveMap(Map* map) {
     file.write(reinterpret_cast<char*>(&map->sunDir), 3 * sizeof(float));
     file.write(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
 
+    file.close();
+}
+
+void saveChunk(Map* map, int pos[2]) {
+    std::ofstream file((std::filesystem::path(map->filePath) / "chunks" / ("chunk_" + std::to_string(pos[0]) + "_" + std::to_string(pos[1]) + ".bin")).string(), std::ios::binary);
+
+    if (!file.is_open()) {
+        std::cout << "Failed to open file for writing\n";
+        return;
+    }
+
     // map
-    //file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
-    //file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
-	//file.write(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
+    file.write(reinterpret_cast<char*>(map->getChunk(pos).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
+    file.write(reinterpret_cast<char*>(map->getChunk(pos).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
+    file.write(reinterpret_cast<char*>(map->getChunk(pos).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
 
     file.close();
 }
 
-void loadMap(Map* map, std::wstring filePath) {
+void loadMeta(Map* map, std::wstring filePath) {
+    // file selection window
     if (filePath.empty()) {
-        OPENFILENAMEW ofn;
-        wchar_t path[260] = { }; // 260 - max filepath length
+        CoInitialize(NULL);
+        std::wstring folder = selectFolder();
+        CoUninitialize();
 
-        // file selection wiundow setup
-        ZeroMemory(&ofn, sizeof(ofn));
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = NULL;
-        ofn.lpstrFile = path;
-        ofn.lpstrFile[0] = L'\0';
-        ofn.nMaxFile = sizeof(path);
-        ofn.lpstrFilter = L"All Files\0*.*\0";
-        ofn.nFilterIndex = 1;
-        ofn.lpstrInitialDir = NULL;
-        ofn.lpstrFileTitle = NULL;
-        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-        // file selection wiundow
-        if (GetOpenFileNameW(&ofn) == FALSE) {
-            std::cout << "No file selected\n";
+        if (folder.empty()) {
+            std::cout << "No folder selected\n";
             return;
         }
 
-        filePath = ofn.lpstrFile;
+        filePath = folder;
     }
 
-    std::ifstream file(filePath, std::ios::binary);
+    std::ifstream file((std::filesystem::path(filePath) / "meta.bin").string(), std::ios::binary);
 
     if (!file.is_open()) {
         std::cout << "Failed to open file for reading\n";
@@ -112,15 +87,70 @@ void loadMap(Map* map, std::wstring filePath) {
     file.read(reinterpret_cast<char*>(&map->sunDir), 3 * sizeof(float));
     file.read(reinterpret_cast<char*>(&map->skyColor), 3 * sizeof(float));
 
+    file.close();
+
+    map->filePath = filePath;
+}
+
+bool loadChunk(Map* map, int pos[2], std::wstring filePath) {
+    std::ifstream file((std::filesystem::path(map->filePath) / "chunks" / ("chunk_" + std::to_string(pos[0]) + "_" + std::to_string(pos[1]) + ".bin")).string(), std::ios::binary);
+
+    // chunk was not saved yet
+    if (!file.is_open()) {
+        return false;
+    }
+
     // map
-    //map->getChunk(0, 0).voxelGridColor = new float[map->chunkWidth * map->height * map->chunkDepth * 4];
-    //file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
+    map->getChunk(pos).voxelGridColor = new float[map->chunkWidth * map->height * map->chunkDepth * 4];
+    file.read(reinterpret_cast<char*>(map->getChunk(pos).voxelGridColor), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * 4 * sizeof(float));
 
-    //map->getChunk(0, 0).voxelGridProperties = new float[map->chunkWidth * map->height * map->chunkDepth];
-    //file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
+    map->getChunk(pos).voxelGridProperties = new float[map->chunkWidth * map->height * map->chunkDepth];
+    file.read(reinterpret_cast<char*>(map->getChunk(pos).voxelGridProperties), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(float));
 
-    //map->getChunk(0, 0).voxelGridCollision = new bool[map->chunkWidth * map->height * map->chunkDepth];
-	//file.read(reinterpret_cast<char*>(map->getChunk(0, 0).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
+    map->getChunk(pos).voxelGridCollision = new bool[map->chunkWidth * map->height * map->chunkDepth];
+    file.read(reinterpret_cast<char*>(map->getChunk(pos).voxelGridCollision), (std::streamsize)map->chunkWidth * map->height * map->chunkDepth * sizeof(bool));
 
     file.close();
+
+    return true;
+}
+
+std::wstring selectFolder()
+{
+    std::wstring folderPath;
+
+    // create the File Open Dialog
+    IFileDialog* pFileDialog = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER,
+        IID_PPV_ARGS(&pFileDialog));
+
+    if (SUCCEEDED(hr))
+    {
+        // pick folders only
+        DWORD options;
+        pFileDialog->GetOptions(&options);
+        pFileDialog->SetOptions(options | FOS_PICKFOLDERS);
+
+        // show dialog
+        hr = pFileDialog->Show(NULL);
+        if (SUCCEEDED(hr))
+        {
+            IShellItem* pItem = nullptr;
+            hr = pFileDialog->GetResult(&pItem);
+            if (SUCCEEDED(hr))
+            {
+                PWSTR pszFilePath = nullptr;
+                hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+                if (SUCCEEDED(hr))
+                {
+                    folderPath = pszFilePath;
+                    CoTaskMemFree(pszFilePath);
+                }
+                pItem->Release();
+            }
+        }
+        pFileDialog->Release();
+    }
+
+    return folderPath;
 }

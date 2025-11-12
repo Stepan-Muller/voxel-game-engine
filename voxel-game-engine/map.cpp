@@ -2,6 +2,8 @@
 
 #include "map.h"
 
+#include "file_io.h"
+
 void Map::updateChunks(int centerChunkPos[2], int renderDistance)
 {
     // map texture creation
@@ -44,6 +46,12 @@ void Map::updateChunks(int centerChunkPos[2], int renderDistance)
         int x = it->first.first;
         int z = it->first.second;
         if (abs(x - centerChunkPos[0]) > renderDistance + 1 || abs(z - centerChunkPos[1]) > renderDistance + 1) {
+            // save chunks if edited
+            if (it->second.edited) {
+                int chunkPos[2] = { it->first.first, it->first.second };
+                saveChunk(this, chunkPos);
+            }
+            
             delete[] it->second.voxelGridColor;
             delete[] it->second.voxelGridProperties;
             delete[] it->second.voxelGridCollision;
@@ -51,6 +59,20 @@ void Map::updateChunks(int centerChunkPos[2], int renderDistance)
         }
         else {
             ++it;
+        }
+    }
+}
+
+void Map::saveChunks()
+{
+    for (auto it = chunks.begin(); it != chunks.end(); it++) {
+        int x = it->first.first;
+        int z = it->first.second;
+
+        // save chunks if edited
+        if (it->second.edited) {
+            int chunkPos[2] = { it->first.first, it->first.second };
+            saveChunk(this, chunkPos);
         }
     }
 }
@@ -87,6 +109,26 @@ bool Map::checkCollision(int pos[3])
     pos[2] = pos[2] - chunkPos[1] * chunkWidth;
 
     return getChunk(chunkPos).voxelGridCollision[pos[0] + pos[1] * chunkWidth + pos[2] * chunkWidth * height];
+}
+
+// Get a chunk at (x,z), create it if it doesn't exist
+Chunk& Map::getChunk(int chunkPos[2]) {
+    std::pair<int, int> coord = { chunkPos[0], chunkPos[1] };
+
+    auto it = chunks.find(coord);
+    if (it != chunks.end()) {
+        return it->second;
+    }
+
+	chunks[coord] = Chunk();
+
+    // load an existing chunk
+	if (loadChunk(this, chunkPos, filePath)) return chunks[coord];
+
+	// create a new chunk
+    Chunk newChunk = createChunk(coord);
+    chunks[coord] = newChunk;
+    return chunks[coord];
 }
 
 Chunk Map::createChunk(std::pair<int, int> coord) {
@@ -130,19 +172,4 @@ Chunk Map::createChunk(std::pair<int, int> coord) {
     }
 
     return chunk;
-}
-
-// Get a chunk at (x,z), create it if it doesn't exist
-Chunk& Map::getChunk(int chunkPos[2]) {
-    std::pair<int, int> coord = { chunkPos[0], chunkPos[1] };
-
-    auto it = chunks.find(coord);
-    if (it != chunks.end()) {
-        return it->second;
-    }
-	
-    // vytvoøit neexistující chunk
-    Chunk newChunk = createChunk(coord);
-    chunks[coord] = newChunk;
-    return chunks[coord];
 }

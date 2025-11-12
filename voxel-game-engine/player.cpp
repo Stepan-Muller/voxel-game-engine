@@ -135,7 +135,7 @@ Player::Player(Map* _map) {
     // delta time setup
     float lastTime = (float)glfwGetTime();
 
-    loadMap(&map, L"demo.bin");
+    loadMeta(&map, L"demo");
     respawn();
 
     /* Main game loop */
@@ -223,12 +223,15 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
     // map save
     if (menu && key == GLFW_KEY_S && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        saveMap(&map);
+    {
+        saveMeta(&map);
+	    (&map)->saveChunks();
+    }
 
     // map load
     if (menu && key == GLFW_KEY_O && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
-        loadMap(&map);
+        loadMeta(&map);
         respawn();
     }
 

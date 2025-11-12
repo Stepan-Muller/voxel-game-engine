@@ -3,24 +3,18 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include <windows.h>
+#include <shobjidl.h>
+#include <string>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "map.h"
 
-/**
- * @brief Save the map to the file selected in a file selection window.
- *
- * @param map Pointer to the map object to save.
- */
-void saveMap(Map* map);
-
-/**
- * @brief Load the map from the optionally specified file or the file selected in a file selection window.
- *
- * @param map Pointer to the map object to load to.
- * @param filePath Optional path to the file to load from. If empty, a file selection window will be opened.
- */
-void loadMap(Map* map, std::wstring filePath = L"");
+void saveMeta(Map* map);
+void saveChunk(Map* map, int pos[2]);
+void loadMeta(Map* map, std::wstring filePath = L"");
+bool loadChunk(Map* map, int pos[2], std::wstring filePath = L"");
+std::wstring selectFolder();
