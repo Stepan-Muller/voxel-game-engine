@@ -3,13 +3,13 @@
 #include "player.h"
 
 Player::Player(Map* _map) {
-    std::string screenVertexSource = loadShaderSource("shaders/vertex.glsl");
+    std::string screenVertexSource = loadShaderSource("vertex.glsl");
     const GLchar* screenVertexShaderSource = screenVertexSource.c_str();
     
-    std::string screenFragmentSource = loadShaderSource("shaders/fragment.glsl");
+    std::string screenFragmentSource = loadShaderSource("fragment.glsl");
     const GLchar* screenFragmentShaderSource = screenFragmentSource.c_str();
     
-    std::string screenComputeSource = loadShaderSource("shaders/compute.glsl");
+    std::string screenComputeSource = loadShaderSource("compute.glsl");
     const GLchar* screenComputeShaderSource = screenComputeSource.c_str();
 
     GLuint screenTex;

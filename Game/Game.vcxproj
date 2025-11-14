@@ -21,32 +21,32 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{4906430a-cb7c-4693-831e-30b571fd276c}</ProjectGuid>
-    <RootNamespace>voxel-game-engine</RootNamespace>
+    <ProjectGuid>{3ed45397-1ce7-46d9-af02-69b0509eeab7}</ProjectGuid>
+    <RootNamespace>Game</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -76,16 +76,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)glad\include;$(SolutionDir)glfw-3.3.8.bin.WIN64\include;$(SolutionDir)imgui;$(SolutionDir)openal-soft-1.24.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ShowIncludes>true</ShowIncludes>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)voxel-game-engine\;$(SolutionDir)glad\include;$(SolutionDir)glfw-3.3.8.bin.WIN64\include;$(SolutionDir)imgui;$(SolutionDir)openal-soft-1.24.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)glfw-3.3.8.bin.WIN64\lib-vc2022;$(SolutionDir)openal-soft-1.24.3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;glfw3dll.lib;user32.lib;gdi32.lib;shell32.lib;OpenAL32.lib
-;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)x64\$(Configuration);$(SolutionDir)glfw-3.3.8.bin.WIN64\lib-vc2022;$(SolutionDir)openal-soft-1.24.3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>voxel-game-engine.lib;glfw3.lib;opengl32.lib;glfw3dll.lib;user32.lib;gdi32.lib;shell32.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -96,18 +93,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)glad\include;$(SolutionDir)glfw-3.3.8.bin.WIN64\include;$(SolutionDir)imgui;$(SolutionDir)openal-soft-1.24.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ShowIncludes>true</ShowIncludes>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)voxel-game-engine\;$(SolutionDir)glad\include;$(SolutionDir)glfw-3.3.8.bin.WIN64\include;$(SolutionDir)imgui;$(SolutionDir)openal-soft-1.24.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)glfw-3.3.8.bin.WIN64\lib-vc2022;$(SolutionDir)openal-soft-1.24.3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;glfw3dll.lib;user32.lib;gdi32.lib;shell32.lib;OpenAL32.lib
-;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)x64\$(Configuration);$(SolutionDir)glfw-3.3.8.bin.WIN64\lib-vc2022;$(SolutionDir)openal-soft-1.24.3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>voxel-game-engine.lib;glfw3.lib;opengl32.lib;glfw3dll.lib;user32.lib;gdi32.lib;shell32.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,16 +110,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)glad\include;$(SolutionDir)glfw-3.3.8.bin.WIN64\include;$(SolutionDir)imgui;$(SolutionDir)openal-soft-1.24.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ShowIncludes>true</ShowIncludes>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)voxel-game-engine\;$(SolutionDir)glad\include;$(SolutionDir)glfw-3.3.8.bin.WIN64\include;$(SolutionDir)imgui;$(SolutionDir)openal-soft-1.24.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)glfw-3.3.8.bin.WIN64\lib-vc2022;$(SolutionDir)openal-soft-1.24.3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;glfw3dll.lib;user32.lib;gdi32.lib;shell32.lib;OpenAL32.lib
-;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)x64\$(Configuration);$(SolutionDir)glfw-3.3.8.bin.WIN64\lib-vc2022;$(SolutionDir)openal-soft-1.24.3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>voxel-game-engine.lib;glfw3.lib;opengl32.lib;glfw3dll.lib;user32.lib;gdi32.lib;shell32.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,59 +127,19 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)glad\include;$(SolutionDir)glfw-3.3.8.bin.WIN64\include;$(SolutionDir)imgui;$(SolutionDir)openal-soft-1.24.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ShowIncludes>true</ShowIncludes>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)voxel-game-engine\;$(SolutionDir)glad\include;$(SolutionDir)glfw-3.3.8.bin.WIN64\include;$(SolutionDir)imgui;$(SolutionDir)openal-soft-1.24.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)glfw-3.3.8.bin.WIN64\lib-vc2022;$(SolutionDir)openal-soft-1.24.3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;glfw3dll.lib;user32.lib;gdi32.lib;shell32.lib;OpenAL32.lib
-;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)x64\$(Configuration);$(SolutionDir)glfw-3.3.8.bin.WIN64\lib-vc2022;$(SolutionDir)openal-soft-1.24.3\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>voxel-game-engine.lib;glfw3.lib;opengl32.lib;glfw3dll.lib;user32.lib;gdi32.lib;shell32.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\glad\src\glad.c" />
-    <ClCompile Include="..\imgui\backends\imgui_impl_glfw.cpp" />
-    <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="..\imgui\imgui.cpp" />
-    <ClCompile Include="..\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="file_io.cpp" />
-    <ClCompile Include="gui.cpp" />
-    <ClCompile Include="map.cpp" />
-    <ClCompile Include="player.cpp" />
-    <ClCompile Include="sound.cpp" />
-    <ClCompile Include="util.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="chunk.h" />
-    <ClInclude Include="file_io.h" />
-    <ClInclude Include="gui.h" />
-    <ClInclude Include="map.h" />
-    <ClInclude Include="player.h" />
-    <ClInclude Include="sound.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="OpenAL32.dll">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-  </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="shaders\compute.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="shaders\fragment.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="shaders\vertex.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
