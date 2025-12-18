@@ -3,6 +3,8 @@
 #include "player.h"
 
 Player::Player(Map* _map) {
+	map = *_map;
+    
     std::string screenVertexSource = loadShaderSource("vertex.glsl");
     const GLchar* screenVertexShaderSource = screenVertexSource.c_str();
     

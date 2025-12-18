@@ -94,6 +94,11 @@ void Map::changeVoxel(int pos[3], float voxel[5], bool collision)
 	getChunk(chunkPos).edited = true;
 }
 
+void Map::setGenerator(IChunkGenerator* _generator)
+{
+    generator = _generator;
+}
+
 bool Map::checkCollision(int pos[3])
 {
     // prevent the player from falling under the map
@@ -142,34 +147,7 @@ Chunk Map::createChunk(std::pair<int, int> coord) {
     for (size_t i = 0; i < chunkWidth * height * chunkDepth; i++) chunk.voxelGridProperties[i] = 0.0f;
     for (size_t i = 0; i < chunkWidth * height * chunkDepth; i++) chunk.voxelGridCollision[i] = false;
 
-    for (unsigned int z = 0; z < chunkDepth; z++) {
-        for (unsigned int x = 0; x < chunkWidth; x++) {
-            unsigned int y = height - 1; // bottom layer
-            size_t index = x * chunkWidth * height + y * chunkWidth + z;
-
-            // RGBA color (solid gray floor)
-            if ((coord.first + coord.second) % 2 == 0)
-            {
-                chunk.voxelGridColor[index * 4 + 0] = 0.5f;
-                chunk.voxelGridColor[index * 4 + 1] = 0.5f;
-                chunk.voxelGridColor[index * 4 + 2] = 0.5f;
-                chunk.voxelGridColor[index * 4 + 3] = 1.0f;
-            }
-            else
-            {
-				chunk.voxelGridColor[index * 4 + 0] = 0.6f;
-				chunk.voxelGridColor[index * 4 + 1] = 0.6f;
-				chunk.voxelGridColor[index * 4 + 2] = 0.6f;
-				chunk.voxelGridColor[index * 4 + 3] = 1.0f;
-            }
-
-            // Properties: reflectivity (example 0.0)
-            chunk.voxelGridProperties[index] = 0.0f;
-
-            // Collision
-            chunk.voxelGridCollision[index] = true;
-        }
-    }
+	generator->generateChunk(chunk, coord, chunkWidth, chunkDepth, height);
 
     return chunk;
 }

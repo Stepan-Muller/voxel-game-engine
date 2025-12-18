@@ -168,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chunk.h" />
+    <ClInclude Include="chunk_generator.h" />
     <ClInclude Include="file_io.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="map.h" />

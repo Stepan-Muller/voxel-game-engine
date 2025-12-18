@@ -93,7 +93,7 @@ private:
     /**
      * @brief Render distance of the camera in voxels.
      */
-    int renderDistance = 2;
+    int renderDistance = 5;
     
     /**
      * @brief Whether the player is currently in the menu.

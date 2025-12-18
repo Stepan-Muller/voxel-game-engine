@@ -1,6 +1,7 @@
 #pragma once
 
 #include "chunk.h"
+#include "chunk_generator.h"
 
 #include <unordered_map>
 #include <tuple>
@@ -63,6 +64,7 @@ public:
 	void updateChunks(int centerChunkPos[2], int renderDistance);
 	void saveChunks();
 	void changeVoxel(int pos[3], float voxel[5], bool collision);
+	void setGenerator(IChunkGenerator* _generator);
 
 	/**
 	 * @brief Check whether the specified voxel is a collision voxel.
@@ -75,6 +77,7 @@ public:
 
 private:
 	std::unordered_map<std::pair<int, int>, Chunk, ChunkCoordHash> chunks;
+	IChunkGenerator* generator = nullptr;
 
 	Chunk createChunk(std::pair<int, int> coord);
 };
