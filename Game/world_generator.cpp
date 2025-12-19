@@ -6,11 +6,18 @@
 
 #define SEA_LEVEL 50
 
-#define ROUGH_PERLIN_FREQ 0.004f
-#define ROUGH_PERLIN_AMPL 40
+#define TEMPERATURE_PERLIN_FREQ 0.0005f
+
+#define ROUGHNNESS_PERLIN_FREQ 0.0005f
+
+#define SMOOTH_PERLIN_FREQ 0.004f
+#define SMOOTH_PERLIN_AMPL 40.0f
+
+#define ROUGH_PERLIN_FREQ 0.01f
+#define ROUGH_PERLIN_AMPL 100.0f
 
 #define FINE_PERLIN_FREQ 0.01f
-#define FINE_PERLIN_AMPL 10
+#define FINE_PERLIN_AMPL 10.0f
 
 void WorldGenerator::generateChunk(Chunk& chunk, std::pair<int, int> coord, int chunkWidth, int chunkDepth, int height)
 {
@@ -18,10 +25,15 @@ void WorldGenerator::generateChunk(Chunk& chunk, std::pair<int, int> coord, int 
     {
         for (int x = 0; x < chunkWidth; x++) 
         {
-            // perlin noise height
-            float roughPerlin = stb_perlin_noise3((coord.second * chunkWidth + x) * ROUGH_PERLIN_FREQ, 0.0f, (coord.first * chunkDepth + z) * ROUGH_PERLIN_FREQ, 0, 0, 0) * FINE_PERLIN_AMPL;
+			float temperature = stb_perlin_noise3((coord.second * chunkWidth + x) * TEMPERATURE_PERLIN_FREQ, 696969.0f, (coord.first * chunkDepth + z) * TEMPERATURE_PERLIN_FREQ, 0, 0, 0);
+
+			float roughness = (stb_perlin_noise3((coord.second * chunkWidth + x) * ROUGHNNESS_PERLIN_FREQ, 676767.0f, (coord.first * chunkDepth + z) * ROUGHNNESS_PERLIN_FREQ, 0, 0, 0) + 1.0f) / 2.0f;
+            
+            // perlin noise for terrain height
+			float smoothPerlin = stb_perlin_noise3((coord.second * chunkWidth + x) * SMOOTH_PERLIN_FREQ, 42069.0f, (coord.first * chunkDepth + z) * SMOOTH_PERLIN_FREQ, 0, 0, 0) * SMOOTH_PERLIN_AMPL;
+            float roughPerlin = stb_perlin_noise3((coord.second * chunkWidth + x) * ROUGH_PERLIN_FREQ, 420420.0f, (coord.first * chunkDepth + z) * ROUGH_PERLIN_FREQ, 0, 0, 0) * FINE_PERLIN_AMPL;
             float finePerlin = stb_perlin_noise3((coord.second * chunkWidth + x) * FINE_PERLIN_FREQ, 0.0f, (coord.first * chunkDepth + z) * FINE_PERLIN_FREQ, 0, 0, 0) * FINE_PERLIN_AMPL;
-            int terrainHeight = SEA_LEVEL + roughPerlin + finePerlin + 5;
+            int terrainHeight = SEA_LEVEL + smoothPerlin + roughPerlin * roughness + finePerlin + 5;
 
             for (unsigned int y = 0; y < height; y++) 
             {
@@ -33,7 +45,7 @@ void WorldGenerator::generateChunk(Chunk& chunk, std::pair<int, int> coord, int 
                     if (y >= terrainHeight - 4)
 					{
 						// high layers
-                        if (terrainHeight > SEA_LEVEL + 4)
+                        if (terrainHeight > SEA_LEVEL + 4 && temperature > 0.0f)
                         {
                             // high above sea level
                             if (y == terrainHeight)
@@ -53,7 +65,7 @@ void WorldGenerator::generateChunk(Chunk& chunk, std::pair<int, int> coord, int 
                         }
                         else if (terrainHeight > SEA_LEVEL - 4)
                         {
-							// beaches
+							// beaches/desserts
                             // sand
 							chunk.voxelGridColor[index * 4 + 0] = 0.9f;
 							chunk.voxelGridColor[index * 4 + 1] = 0.8f;
@@ -61,7 +73,7 @@ void WorldGenerator::generateChunk(Chunk& chunk, std::pair<int, int> coord, int 
 						}
                         else
                         {
-                            // underwater
+                            // deep underwater
                             // gravel
 							chunk.voxelGridColor[index * 4 + 0] = 0.4f;
 							chunk.voxelGridColor[index * 4 + 1] = 0.4f;
