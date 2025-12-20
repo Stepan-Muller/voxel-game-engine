@@ -79,11 +79,14 @@ void Map::saveChunks()
 
 void Map::changeVoxel(int pos[3], float voxel[5], bool collision)
 {
+	if (chunkWidth <= 0 || chunkDepth <= 0 || height <= 0)
+		return;
+    
     int chunkPos[2] = { floor((float)pos[0] / chunkWidth), floor((float)pos[2] / chunkWidth) };
 
 	pos[0] = pos[0] - chunkPos[0] * chunkWidth;
 	pos[2] = pos[2] - chunkPos[1] * chunkWidth;
-    
+
     getChunk(chunkPos).voxelGridColor[pos[0] * 4 + pos[1] * chunkWidth * 4 + pos[2] * chunkWidth * height * 4] = voxel[0];
     getChunk(chunkPos).voxelGridColor[pos[0] * 4 + pos[1] * chunkWidth * 4 + pos[2] * chunkWidth * height * 4 + 1] = voxel[1];
     getChunk(chunkPos).voxelGridColor[pos[0] * 4 + pos[1] * chunkWidth * 4 + pos[2] * chunkWidth * height * 4 + 2] = voxel[2];
