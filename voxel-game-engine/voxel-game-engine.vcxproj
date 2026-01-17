@@ -171,6 +171,7 @@
     <ClInclude Include="chunk_generator.h" />
     <ClInclude Include="file_io.h" />
     <ClInclude Include="gui.h" />
+    <ClInclude Include="voxel_interactor.h" />
     <ClInclude Include="map.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="sound.h" />

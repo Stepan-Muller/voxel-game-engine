@@ -13,6 +13,7 @@
 #include "file_io.h"
 #include "sound.h"
 #include "gui.h"
+#include "voxel_interactor.h"
 
 /* Verze OpenGL (4.6) */
 #define OPENGL_MAJOR_VERSION 4
@@ -31,12 +32,12 @@ public:
      *
      * @param _map Pointer to the map object in which the player is located
      */
-    Player(Map* _map);
+    Player(Map* _map, IVoxelInteractor* _voxelInteractor);
 private:
     /**
      * @brief Pointer to the map object in which the player is located.
      */
-    Map map;
+    Map* map;
 
     /**
      * @brief Position of the player in the map.
@@ -93,7 +94,7 @@ private:
     /**
      * @brief Render distance of the camera in voxels.
      */
-    int renderDistance = 5;
+    int renderDistance = 2;
 
     /**
      * @brief Whether the player is currently in the menu.
@@ -197,4 +198,6 @@ private:
      * @brief GLFW window size callback, made static.
      */
     static void staticWindowSizeCallback(GLFWwindow* window, int width, int height);
+
+    IVoxelInteractor* voxelInteractor = nullptr;
 };

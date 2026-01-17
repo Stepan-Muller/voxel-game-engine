@@ -140,10 +140,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="game_voxel_interactor.cpp" />
     <ClCompile Include="world_generator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_perlin.h" />
+    <ClInclude Include="game_voxel_interactor.h" />
     <ClInclude Include="world_generator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

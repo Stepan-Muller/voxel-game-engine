@@ -2,9 +2,10 @@
 
 #include "player.h"
 
-Player::Player(Map* _map) {
-	map = *_map;
-    
+Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor) {
+	map = _map;
+    voxelInteractor = _voxelInteractor;
+
     std::string screenVertexSource = loadShaderSource("vertex.glsl");
     const GLchar* screenVertexShaderSource = screenVertexSource.c_str();
     
@@ -137,7 +138,7 @@ Player::Player(Map* _map) {
     // delta time setup
     float lastTime = (float)glfwGetTime();
 
-    loadMeta(&map, L"demo");
+    loadMeta(map, L"demo");
     respawn();
 
     /* Main game loop */
@@ -151,12 +152,12 @@ Player::Player(Map* _map) {
         movePlayer(window);
 
         // chunk update
-        int chunkPos[2] = {floor(pos[0] / (&map)->chunkWidth), floor(pos[2] / (&map)->chunkWidth)};
+        int chunkPos[2] = {floor(pos[0] / map->chunkWidth), floor(pos[2] / map->chunkWidth)};
         if (chunkPos[0] != lastChunkPos[0] || chunkPos[1] != lastChunkPos[1])
         {
             lastChunkPos[0] = chunkPos[0];
             lastChunkPos[1] = chunkPos[1];
-            (&map)->updateChunks(chunkPos, renderDistance);
+            map->updateChunks(chunkPos, renderDistance);
         }
 
         // callbacks
@@ -166,12 +167,12 @@ Player::Player(Map* _map) {
         glUseProgram(computeProgram);
         // compute shaderu parameters
         glUniform1i(glGetUniformLocation(computeProgram, "renderDist"), renderDistance);
-		glUniform1i(glGetUniformLocation(computeProgram, "chunkWidth"), (&map)->chunkWidth);
+		glUniform1i(glGetUniformLocation(computeProgram, "chunkWidth"), map->chunkWidth);
         glUniform2f(glGetUniformLocation(computeProgram, "angle"), angle[0], angle[1]);
         glUniform1f(glGetUniformLocation(computeProgram, "fov"), fov);
         glUniform3f(glGetUniformLocation(computeProgram, "playerPos"), pos[0], pos[1], pos[2]);
-        glUniform3f(glGetUniformLocation(computeProgram, "sunDir"), (&map)->sunDir[0], (&map)->sunDir[1], (&map)->sunDir[2]);
-        glUniform3f(glGetUniformLocation(computeProgram, "skyColor"), (&map)->skyColor[0], (&map)->skyColor[1], (&map)->skyColor[2]);
+        glUniform3f(glGetUniformLocation(computeProgram, "sunDir"), map->sunDir[0], map->sunDir[1], map->sunDir[2]);
+        glUniform3f(glGetUniformLocation(computeProgram, "skyColor"), map->skyColor[0], map->skyColor[1], map->skyColor[2]);
 
         glDispatchCompute(screenWidth / 8 + 1, screenHeight / 4 + 1, 1);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -203,11 +204,11 @@ std::string Player::loadShaderSource(const std::string& filePath) {
 }
 
 void Player::respawn() {
-	pos[0] = (&map)->spawnPos[0];
-	pos[1] = (&map)->spawnPos[1];
-	pos[2] = (&map)->spawnPos[2];
-	angle[0] = (&map)->spawnAngle[0];
-	angle[1] = (&map)->spawnAngle[1];
+	pos[0] = map->spawnPos[0];
+	pos[1] = map->spawnPos[1];
+	pos[2] = map->spawnPos[2];
+	angle[0] = map->spawnAngle[0];
+	angle[1] = map->spawnAngle[1];
 }
 
 void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -226,14 +227,14 @@ void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
     // map save
     if (menu && key == GLFW_KEY_S && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
-        saveMeta(&map);
-	    (&map)->saveChunks();
+        saveMeta(map);
+	    map->saveChunks();
     }
 
     // map load
     if (menu && key == GLFW_KEY_O && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
-        loadMeta(&map);
+        loadMeta(map);
         respawn();
     }
 
@@ -292,8 +293,7 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
 
 		int hitNeighbour[3] = { hitVoxel[0] - hitNormal[0], hitVoxel[1] - hitNormal[1], hitVoxel[2] - hitNormal[2] };
 
-		(&map)->changeVoxel(hitNeighbour, gui->selectedVoxel, gui->selectedVoxelCollision);
-        (&map)->updateChunks(lastChunkPos, renderDistance);
+        voxelInteractor->onVoxelPlace(hitNeighbour, lastChunkPos, gui, renderDistance);
 	}
     
 	// voxel removal
@@ -318,8 +318,7 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
 		if (hitNormal[0] == 0 && hitNormal[1] == 0 && hitNormal[2] == 0)
 			return;
 
-        (&map)->changeVoxel(hitVoxel, new float[5] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }, false);
-        (&map)->updateChunks(lastChunkPos, renderDistance);
+        voxelInteractor->onVoxelDestroy(hitVoxel, lastChunkPos, renderDistance);
     }
 }
 
@@ -352,7 +351,7 @@ bool Player::checkPlayerCollision(float pos[3])
             {
                 int voxelPos[3] = {x, y, z};
                 
-                if ((&map)->checkCollision(voxelPos))
+                if (map->checkCollision(voxelPos))
                     return true;
             }
         }
@@ -376,26 +375,26 @@ void Player::movePlayer(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_W))
     {
-        move[0] -= delta[0] * deltaTime * (&map)->moveSpeed * speedMultiplier;
-        move[2] -= delta[1] * deltaTime * (&map)->moveSpeed * speedMultiplier;
+        move[0] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] -= delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_S))
     {
-        move[0] += delta[0] * deltaTime * (&map)->moveSpeed * speedMultiplier;
-        move[2] += delta[1] * deltaTime * (&map)->moveSpeed * speedMultiplier;
+        move[0] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] += delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_A))
     {
-        move[0] += delta[1] * deltaTime * (&map)->moveSpeed * speedMultiplier;
-        move[2] -= delta[0] * deltaTime * (&map)->moveSpeed * speedMultiplier;
+        move[0] += delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] -= delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (glfwGetKey(window, GLFW_KEY_D))
     {
-        move[0] -= delta[1] * deltaTime * (&map)->moveSpeed * speedMultiplier;
-        move[2] += delta[0] * deltaTime * (&map)->moveSpeed * speedMultiplier;
+        move[0] -= delta[1] * deltaTime * map->moveSpeed * speedMultiplier;
+        move[2] += delta[0] * deltaTime * map->moveSpeed * speedMultiplier;
     }
 
     if (grounded)
