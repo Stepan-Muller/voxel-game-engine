@@ -293,7 +293,7 @@ void Player::mouseButtonCallback(GLFWwindow* window, int button, int action, int
 
 		int hitNeighbour[3] = { hitVoxel[0] - hitNormal[0], hitVoxel[1] - hitNormal[1], hitVoxel[2] - hitNormal[2] };
 
-        voxelInteractor->onVoxelPlace(hitNeighbour, lastChunkPos, gui, renderDistance);
+        voxelInteractor->onVoxelPlace(hitNeighbour, lastChunkPos, renderDistance);
 	}
     
 	// voxel removal
