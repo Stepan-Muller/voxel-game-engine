@@ -16,4 +16,6 @@ private:
 	float pickedVoxel[5] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
 	bool pickedVoxelCollision = false;
+
+	int pickedAmount = 0;
 };
