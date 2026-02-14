@@ -240,11 +240,17 @@ void Player::loadGame()
         toggleMenu();
 }
 
-void Player::respawn() {
+void Player::respawn() 
+{
     resetPlayer();
 
     if (menu)
         toggleMenu();
+}
+
+void Player::exit() 
+{
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
 void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

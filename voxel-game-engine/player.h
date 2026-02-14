@@ -48,6 +48,8 @@ public:
      */
     void respawn();
 
+    void exit();
+
     /**
      * @brief Whether the player is currently in the menu.
      */

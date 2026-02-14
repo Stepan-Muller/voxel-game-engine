@@ -14,7 +14,7 @@ void GameGui::render(Player* player) {
 
 void GameGui::renderMenu(Player* player)
 {
-    ImGui::SetNextWindowSize(ImVec2(300, 250), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_Always);
     ImGui::SetNextWindowPos(
         ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f),
         ImGuiCond_Always,
@@ -58,6 +58,15 @@ void GameGui::renderMenu(Player* player)
         sound->playSound("sounds/block.wav");
         
         player->respawn();
+    }
+
+    ImGui::Spacing();
+
+    if (ImGui::Button("Exit", ImVec2(-1, 40)))
+    {
+        sound->playSound("sounds/block.wav");
+
+        player->exit();
     }
 
     ImGui::End();
