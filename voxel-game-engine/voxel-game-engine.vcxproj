@@ -159,8 +159,8 @@
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="engine_gui.cpp" />
     <ClCompile Include="file_io.cpp" />
-    <ClCompile Include="gui.cpp" />
     <ClCompile Include="map.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="sound.cpp" />
@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClInclude Include="chunk.h" />
     <ClInclude Include="chunk_generator.h" />
+    <ClInclude Include="engine_gui.h" />
     <ClInclude Include="file_io.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="voxel_interactor.h" />

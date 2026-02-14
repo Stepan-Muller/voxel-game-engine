@@ -1,6 +1,6 @@
-#include "Gui.h"
+#include "engine_gui.h"
 
-Gui::Gui(GLFWwindow* window)
+EngineGui::EngineGui(GLFWwindow* window, IGui* _gameGui)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -9,27 +9,23 @@ Gui::Gui(GLFWwindow* window)
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");  // match shader version
+
+	gameGui = _gameGui;
 }
 
-Gui::~Gui()
+EngineGui::~EngineGui()
 {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
-void Gui::render() {
+void EngineGui::render(Player* player) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("Editor voxelù");
-
-    ImGui::ColorPicker4("Barva voxelu", selectedVoxel);
-    ImGui::SliderFloat("Odrazivost voxelu", &selectedVoxel[4], 0.0f, 1.0f);
-    ImGui::Checkbox("Kolize", &selectedVoxelCollision);
-
-    ImGui::End();
+	gameGui->render(player);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

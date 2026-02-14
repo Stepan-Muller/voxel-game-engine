@@ -7,13 +7,16 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 
 #include "util.c"
 #include "map.h"
 #include "file_io.h"
 #include "sound.h"
-#include "gui.h"
 #include "voxel_interactor.h"
+#include "engine_gui.h"
 
 /* Verze OpenGL (4.6) */
 #define OPENGL_MAJOR_VERSION 4
@@ -32,7 +35,24 @@ public:
      *
      * @param _map Pointer to the map object in which the player is located
      */
-    Player(Map* _map, IVoxelInteractor* _voxelInteractor);
+    Player(Map* _map, IVoxelInteractor* _voxelInteractor, IGui* _gameGui);
+
+    void toggleMenu();
+
+    void saveGame();
+
+    void loadGame();
+
+    /**
+     * @brief Respawn the player at the maps spawn position and angle.
+     */
+    void respawn();
+
+    /**
+     * @brief Whether the player is currently in the menu.
+     */
+    bool menu = false;
+
 private:
     /**
      * @brief Pointer to the map object in which the player is located.
@@ -97,11 +117,6 @@ private:
     int renderDistance = 2;
 
     /**
-     * @brief Whether the player is currently in the menu.
-     */
-    bool menu = false;
-
-    /**
      * @brief Flag for reseting the mouse position when exiting out of the menu.
      */
     bool resetMouse = true;
@@ -127,22 +142,12 @@ private:
     Sound sound;
 
     /**
-     * @brief Pointer to the gui class.
-     */
-    Gui* gui;
-
-    /**
      * @brief Load shader source code from a file.
      *
      * @param filePath Path to the shader file.
      * @return The shader source code as a string.
      */
     std::string loadShaderSource(const std::string& filePath);
-
-    /**
-     * @brief Respawn the player at the maps spawn position and angle.
-     */
-    void respawn();
 
     /**
      * @brief GLFW key callback.
@@ -199,5 +204,10 @@ private:
      */
     static void staticWindowSizeCallback(GLFWwindow* window, int width, int height);
 
+	GLFWwindow* window = nullptr;
+
     IVoxelInteractor* voxelInteractor = nullptr;
+
+	EngineGui* engineGui = nullptr;
+	IGui* gameGui = nullptr;
 };

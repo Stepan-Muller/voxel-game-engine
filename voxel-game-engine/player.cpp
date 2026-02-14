@@ -2,9 +2,10 @@
 
 #include "player.h"
 
-Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor) {
+Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor, IGui* _gameGui) {
 	map = _map;
     voxelInteractor = _voxelInteractor;
+	gameGui = _gameGui;
 
     std::string screenVertexSource = loadShaderSource("vertex.glsl");
     const GLchar* screenVertexShaderSource = screenVertexSource.c_str();
@@ -39,7 +40,7 @@ Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // window creation
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Voxel Game Engine", NULL, NULL);
+    window = glfwCreateWindow(screenWidth, screenHeight, "Voxel Game Engine", NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create the GLFW window\n";
@@ -132,8 +133,7 @@ Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor) {
 
     glDeleteShader(computeShader);
 
-	// gui initialization   
-	gui = new Gui(window);
+	engineGui = new EngineGui(window, gameGui);
 
     // delta time setup
     float lastTime = (float)glfwGetTime();
@@ -185,8 +185,7 @@ Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor) {
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
-		// menu gui rendering
-		if (menu) gui->render();
+		engineGui->render(this);
 
         glfwSwapBuffers(window);
     }
@@ -203,40 +202,58 @@ std::string Player::loadShaderSource(const std::string& filePath) {
     return buffer.str();
 }
 
+void Player::toggleMenu()
+{
+    menu = !menu;
+    if (menu)
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    else
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    resetMouse = true;
+}
+
+void Player::saveGame()
+{
+    saveMeta(map);
+    map->saveChunks();
+
+	if (menu)
+        toggleMenu();
+}
+
+void Player::loadGame()
+{
+	loadMeta(map);
+	respawn();
+
+    if (menu)
+        toggleMenu();
+}
+
 void Player::respawn() {
 	pos[0] = map->spawnPos[0];
 	pos[1] = map->spawnPos[1];
 	pos[2] = map->spawnPos[2];
 	angle[0] = map->spawnAngle[0];
 	angle[1] = map->spawnAngle[1];
+
+    if (menu)
+        toggleMenu();
 }
 
 void Player::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     // release the mouse in the menu
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    {
-        menu = !menu;
-        if (menu)
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        else
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        resetMouse = true;
-    }
+		toggleMenu();
 
     // map save
     if (menu && key == GLFW_KEY_S && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-    {
-        saveMeta(map);
-	    map->saveChunks();
-    }
+        saveGame();
 
     // map load
     if (menu && key == GLFW_KEY_O && action == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-    {
-        loadMeta(map);
-        respawn();
-    }
+        loadGame();
 
     // respawn
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
