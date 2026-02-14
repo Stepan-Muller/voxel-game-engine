@@ -2,10 +2,11 @@
 
 #include "player.h"
 
-Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor, IGui* _gameGui) {
+Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor, IGui* _gameGui, Sound* _sound) {
 	map = _map;
     voxelInteractor = _voxelInteractor;
 	gameGui = _gameGui;
+	sound = _sound;
 
     std::string screenVertexSource = loadShaderSource("vertex.glsl");
     const GLchar* screenVertexShaderSource = screenVertexSource.c_str();
@@ -454,20 +455,20 @@ void Player::movePlayer(GLFWwindow* window)
     
     if (grounded && (move[0] || move[2]) && stepTimer <= 0.0f)
     {
-		sound.playSound("sounds/step" + std::to_string(rand() % 6) + ".wav", 0.1f);
+		sound->playSound("sounds/step" + std::to_string(rand() % 5) + ".wav", 0.1f);
 		stepTimer = STEP_COOLDOWN;
     }
 
     // falling sounds (louder footstep)
     if (grounded && fallSpeed >= 20)
-        sound.playSound("sounds/step" + std::to_string(rand() % 6) + ".wav");
+        sound->playSound("sounds/step" + std::to_string(rand() % 5) + ".wav");
         
 
 	// give the sound engine the player position information
 	ALfloat listenerPos[] = { pos[0], pos[1], pos[2] };
 	ALfloat listenerVel[] = { move[0], move[1], move[2] };
 	ALfloat listenerOri[] = { delta[0], 0.0f, delta[1], 0.0f, 1.0f, 0.0f };
-	sound.setPlayerPosition(listenerPos, listenerVel, listenerOri);
+	sound->setPlayerPosition(listenerPos, listenerVel, listenerOri);
 }
 
 void Player::staticKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

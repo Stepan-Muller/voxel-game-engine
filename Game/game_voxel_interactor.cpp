@@ -2,15 +2,22 @@
 
 #include "game_voxel_interactor.h"
 
-GameVoxelInteractor::GameVoxelInteractor(Map* _map)
+GameVoxelInteractor::GameVoxelInteractor(Map* _map, Sound* _sound)
 {
 	map = _map;
+	sound = _sound;
 }
 
 void GameVoxelInteractor::onVoxelPlace(int pos[3], int lastChunkPos[2], int renderDistance)
 {
     map->changeVoxel(pos, pickedVoxel, pickedVoxelCollision);
     map->updateChunks(lastChunkPos, renderDistance);
+
+	if (pickedAmount > 0)
+	{
+		ALfloat soundPos[] = { pos[0], pos[1], pos[2] };
+		sound->playSound("sounds/block.wav", soundPos, 1.0f);
+	}
 
 	pickedAmount -= 1;
 
@@ -50,6 +57,9 @@ void GameVoxelInteractor::onVoxelDestroy(int pos[3], int lastChunkPos[2], int re
 
 		map->changeVoxel(pos, new float[5] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }, false);
 		map->updateChunks(lastChunkPos, renderDistance);
+
+		ALfloat soundPos[] = { pos[0], pos[1], pos[2] };
+		sound->playSound("sounds/block.wav", soundPos, 1.0f);
 	}
 	else if (pickedVoxel[0] == thisVoxel[0] && pickedVoxel[1] == thisVoxel[1] && pickedVoxel[2] == thisVoxel[2] && pickedVoxel[3] == thisVoxel[3] && pickedVoxel[4] == thisVoxel[4] && pickedVoxelCollision == thisVoxelCollision)
 	{
@@ -57,5 +67,8 @@ void GameVoxelInteractor::onVoxelDestroy(int pos[3], int lastChunkPos[2], int re
 
 		map->changeVoxel(pos, new float[5] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f }, false);
 		map->updateChunks(lastChunkPos, renderDistance);
+
+		ALfloat soundPos[] = { pos[0], pos[1], pos[2] };
+		sound->playSound("sounds/block.wav", soundPos, 1.0f);
 	}
 }

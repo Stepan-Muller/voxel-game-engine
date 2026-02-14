@@ -1,5 +1,10 @@
 #include "game_gui.h"
 
+GameGui::GameGui(Sound* _sound)
+{
+	sound = _sound;
+}
+
 void GameGui::render(Player* player) {   
 	if (player->menu)
 		renderMenu(player);
@@ -22,22 +27,38 @@ void GameGui::renderMenu(Player* player)
         ImGuiWindowFlags_NoMove);
 
     if (ImGui::Button("Return to Game", ImVec2(-1, 40)))
+    {
+        sound->playSound("sounds/block.wav");
+
         player->toggleMenu();
+    }
 
     ImGui::Spacing();
 
     if (ImGui::Button("Save Game", ImVec2(-1, 40)))
-		player->saveGame();
+    {
+        sound->playSound("sounds/block.wav");
+        
+        player->saveGame();
+    }
 
     ImGui::Spacing();
 
     if (ImGui::Button("Load Game", ImVec2(-1, 40)))
+    {
+        sound->playSound("sounds/block.wav");
+        
         player->loadGame();
+    }
 
     ImGui::Spacing();
 
     if (ImGui::Button("Respawn", ImVec2(-1, 40)))
-		player->respawn();
+    {
+        sound->playSound("sounds/block.wav");
+        
+        player->respawn();
+    }
 
     ImGui::End();
 }

@@ -35,7 +35,7 @@ public:
      *
      * @param _map Pointer to the map object in which the player is located
      */
-    Player(Map* _map, IVoxelInteractor* _voxelInteractor, IGui* _gameGui);
+    Player(Map* _map, IVoxelInteractor* _voxelInteractor, IGui* _gameGui, Sound* _sound);
 
     void toggleMenu();
 
@@ -139,7 +139,7 @@ private:
     /**
      * @brief Sound system.
      */
-    Sound sound;
+    Sound* sound;
 
     /**
      * @brief Load shader source code from a file.
