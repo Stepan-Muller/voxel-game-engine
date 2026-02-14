@@ -51,7 +51,7 @@ public:
     /**
      * @brief Whether the player is currently in the menu.
      */
-    bool menu = false;
+    bool menu = true;
 
 private:
     /**
@@ -119,7 +119,7 @@ private:
     /**
      * @brief Flag for reseting the mouse position when exiting out of the menu.
      */
-    bool resetMouse = true;
+    bool resetMouse = false;
 
     /**
      * @brief Whether the window should use v-sync.
@@ -148,6 +148,8 @@ private:
      * @return The shader source code as a string.
      */
     std::string loadShaderSource(const std::string& filePath);
+
+	void resetPlayer();
 
     /**
      * @brief GLFW key callback.

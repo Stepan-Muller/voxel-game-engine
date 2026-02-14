@@ -54,7 +54,7 @@ Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor, IGui* _gameGui) {
     glfwSetKeyCallback(window, staticKeyCallback);
     glfwSetCursorPosCallback(window, staticMouseCallback);
 	glfwSetMouseButtonCallback(window, staticMouseButtonCallback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetWindowSizeCallback(window, staticWindowSizeCallback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -139,7 +139,7 @@ Player::Player(Map* _map, IVoxelInteractor* _voxelInteractor, IGui* _gameGui) {
     float lastTime = (float)glfwGetTime();
 
     loadMeta(map, L"demo");
-    respawn();
+    resetPlayer();
 
     /* Main game loop */
     while (!glfwWindowShouldClose(window))
@@ -212,6 +212,15 @@ void Player::toggleMenu()
     resetMouse = true;
 }
 
+void Player::resetPlayer()
+{
+    pos[0] = map->spawnPos[0];
+    pos[1] = map->spawnPos[1];
+    pos[2] = map->spawnPos[2];
+    angle[0] = map->spawnAngle[0];
+    angle[1] = map->spawnAngle[1];
+}
+
 void Player::saveGame()
 {
     saveMeta(map);
@@ -224,18 +233,14 @@ void Player::saveGame()
 void Player::loadGame()
 {
 	loadMeta(map);
-	respawn();
+    resetPlayer();
 
     if (menu)
         toggleMenu();
 }
 
 void Player::respawn() {
-	pos[0] = map->spawnPos[0];
-	pos[1] = map->spawnPos[1];
-	pos[2] = map->spawnPos[2];
-	angle[0] = map->spawnAngle[0];
-	angle[1] = map->spawnAngle[1];
+    resetPlayer();
 
     if (menu)
         toggleMenu();
