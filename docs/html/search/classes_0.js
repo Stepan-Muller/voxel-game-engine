@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['gui_0',['Gui',['../class_gui.html',1,'']]]
+  ['chunk_0',['Chunk',['../struct_chunk.html',1,'']]],
+  ['chunkcoordhash_1',['ChunkCoordHash',['../struct_chunk_coord_hash.html',1,'']]]
 ];

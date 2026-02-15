@@ -1,4 +1,5 @@
 var map_8h =
 [
-    [ "Map", "struct_map.html", "struct_map" ]
+    [ "ChunkCoordHash", "struct_chunk_coord_hash.html", "struct_chunk_coord_hash" ],
+    [ "Map", "class_map.html", "class_map" ]
 ];
