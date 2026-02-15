@@ -16,5 +16,8 @@ struct Chunk {
 	 */
 	bool* voxelGridCollision;
 
+	/**
+	 * @brief Whether the chunk has been edited since it was loaded or generated. Used to determine whether it needs to be saved when it is unloaded.
+	 */
 	bool edited = false;
 };

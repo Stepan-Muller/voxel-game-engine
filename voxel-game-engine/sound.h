@@ -12,7 +12,7 @@ public:
      * @brief Constructor for the Sound class.
      */
     Sound();
-    
+
     /**
      * @brief Destructor for the Sound class, cleanup.
      */
@@ -25,16 +25,16 @@ public:
      * @param sourcePos The position of the sound source within the game world.
      * @param volume The volume of the sound from 0.0 (mute) to 1.0 (max). Defaults to 1.0.
      */
-    void playSound(const std::string& filename, ALfloat sourcePos[], float volume = 1.0f);
-    
+    void playSound(const std::string &filename, ALfloat sourcePos[], float volume = 1.0f);
+
     /**
      * @brief Play a sound from a WAV file at the position of the player and optionally at a specified volume.
      *
      * @param filename The name of the WAV file to play.
      * @param volume The volume of the sound from 0.0 (mute) to 1.0 (max). Defaults to 1.0.
      */
-    void playSound(const std::string& filename, float volume = 1.0f);
-    
+    void playSound(const std::string &filename, float volume = 1.0f);
+
     /**
      * @brief Set the position and velocity of the listener (player).
      *
@@ -45,9 +45,24 @@ public:
     void setPlayerPosition(ALfloat listenerPos[], ALfloat listenerVel[], ALfloat listenerOri[]);
 
 private:
-    ALCdevice* device;
-    ALCcontext* context;
+    /**
+     * @brief Pointer to the OpenAL device used for audio output.
+     */
+    ALCdevice *device;
+
+    /**
+     * @brief Pointer to the OpenAL context used for managing audio state and resources.
+     */
+    ALCcontext *context;
+
+    /**
+     * @brief Vector of OpenAL buffer IDs for loaded audio data.
+     */
     std::vector<ALuint> buffers;
+
+    /**
+     * @brief Vector of OpenAL source IDs for currently playing sounds.
+     */
     std::vector<ALuint> sources;
 
     /**
@@ -55,14 +70,16 @@ private:
      *
      * @param filename The name of the WAV file to load.
      * @param buffer The OpenAL buffer to fill with audio data.
+     * 
      * @return True if successful, false otherwise.
      */
-    bool loadWavFile(const std::string& filename, ALuint& buffer);
-    
+    bool loadWavFile(const std::string &filename, ALuint &buffer);
+
     /**
      * @brief Create an OpenAL source and attach a buffer to it.
      *
      * @param buffer The OpenAL buffer to attach to the source.
+     * 
      * @return The OpenAL source ID.
      */
     ALuint createSource(ALuint buffer);

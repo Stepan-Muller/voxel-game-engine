@@ -9,19 +9,32 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
-class GameGui : public IGui {
+class GameGui : public IGui
+{
 public:
-	GameGui(Sound* _sound);
-	
+	/**
+	 * @brief Constructor for the GameGui class.
+	 */
+	GameGui(Sound *_sound);
+
 	/**
 	 * @brief Render the menu GUI.
 	 */
-	void render(Player* player);
+	void render(Player *player);
 
 private:
-	Sound* sound;
-	
-	void renderMenu(Player* player);
+	/**
+	 * @brief Sound system.
+	 */
+	Sound *sound;
 
+	/**
+	 * @brief Render the menu GUI.
+	 */
+	void renderMenu(Player *player);
+
+	/**
+	 * @brief Render the in-game GUI.
+	 */
 	void renderInGame();
 };
